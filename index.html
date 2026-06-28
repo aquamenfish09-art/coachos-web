@@ -1,4 +1,12 @@
-<!DOCTYPE html>
+from pathlib import Path
+import shutil, zipfile, textwrap
+
+out_dir = Path("/mnt/data/coachos_visual_memory_update")
+if out_dir.exists():
+    shutil.rmtree(out_dir)
+out_dir.mkdir(parents=True)
+
+index_code = """<!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
@@ -64,9 +72,7 @@
       font-size: 16px;
       box-sizing: border-box;
     }
-    textarea {
-      min-height: 90px;
-    }
+    textarea { min-height: 90px; }
     .btn {
       width: 100%;
       padding: 14px;
@@ -77,6 +83,16 @@
       font-size: 16px;
       font-weight: bold;
       cursor: pointer;
+      margin-top: 6px;
+    }
+    .btn.secondary {
+      background: #1e293b;
+      color: white;
+      border: 1px solid #334155;
+    }
+    .btn.danger {
+      background: linear-gradient(135deg, #fb7185, #f59e0b);
+      color: #111827;
     }
     .result {
       background: #020617;
@@ -104,6 +120,34 @@
       margin-top: 5px;
       color: #22c55e;
     }
+    .memory-item {
+      background: #020617;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .memory-item h3 {
+      margin: 0 0 8px;
+      color: #22c55e;
+    }
+    .memory-meta {
+      color: #94a3b8;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+    .small {
+      color: #94a3b8;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    img.preview {
+      max-width: 100%;
+      border-radius: 14px;
+      border: 1px solid #334155;
+      margin: 8px 0 14px;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -115,6 +159,7 @@
   <button onclick="showPage('profil', this)">Profil</button>
   <button onclick="showPage('yemek', this)">Yemek</button>
   <button onclick="showPage('vucut', this)">Vücut</button>
+  <button onclick="showPage('hafiza', this)">Hafıza</button>
   <button onclick="showPage('antrenman', this)">Antrenman</button>
   <button onclick="showPage('motivasyon', this)">Motivasyon</button>
   <button onclick="showPage('rapor', this)">Rapor</button>
@@ -123,7 +168,7 @@
 <section id="panel" class="active">
   <div class="card">
     <h2>Motivasyon biter, sistem devam eder.</h2>
-    <p>Profilini kur, CoachOS sana kalori, makro, antrenman ve günlük görev çıkarır.</p>
+    <p>Profilini kur, CoachOS sana kalori, makro, antrenman, görsel analiz ve günlük görev çıkarır.</p>
   </div>
 
   <div class="grid">
@@ -136,6 +181,11 @@
   <div class="card">
     <h3>Bugünün Görevi</h3>
     <div class="result" id="gorev">Önce profilini kur dostum.</div>
+  </div>
+
+  <div class="card">
+    <h3>Görsel Hafıza Özeti</h3>
+    <div class="result" id="memorySummary">Henüz görsel analiz yok.</div>
   </div>
 </section>
 
@@ -189,23 +239,51 @@
 
 <section id="yemek">
   <div class="card">
-    <h2>Yemek Analizi</h2>
+    <h2>Yemek Görsel Analizi</h2>
+    <p class="small">Yemek fotoğrafı seç. CoachOS tahmini kalori, makro ve günün kalan önerisini çıkarır. Sonuç otomatik hafızaya kaydedilir.</p>
+
+    <label>Yemek fotoğrafı</label>
+    <input type="file" id="mealImage" accept="image/*" onchange="previewImage(event, 'mealPreview')">
+    <img id="mealPreview" class="preview">
+
+    <label>İsteğe bağlı not</label>
     <textarea id="yemekText" placeholder="Örnek: 200 g tavuk, 150 g pilav, 1 kase yoğurt"></textarea>
-    <button class="btn" onclick="yemekAnaliz()">Yemeği Analiz Et</button>
+
+    <button class="btn" onclick="yemekAnaliz()">Yemeği Görsel Analiz Et</button>
   </div>
   <div class="card">
-    <div class="result" id="yemekSonuc">Yemek bilgisi gir.</div>
+    <div class="result" id="yemekSonuc">Yemek fotoğrafı seç.</div>
   </div>
 </section>
 
 <section id="vucut">
   <div class="card">
-    <h2>Vücut Analizi</h2>
+    <h2>Vücut Görsel Analizi</h2>
+    <p class="small">Vücut fotoğrafı seç. CoachOS fitness odaklı tahmini analiz ve 90 günlük strateji çıkarır. Sonuç otomatik hafızaya kaydedilir.</p>
+
+    <label>Vücut fotoğrafı</label>
+    <input type="file" id="bodyImage" accept="image/*" onchange="previewImage(event, 'bodyPreview')">
+    <img id="bodyPreview" class="preview">
+
+    <label>İsteğe bağlı not</label>
     <textarea id="vucutText" placeholder="Örnek: göbek-bel var, omuzlar iyi, göğüs zayıf, bacaklar güçlü..."></textarea>
-    <button class="btn" onclick="vucutAnaliz()">Analiz Et</button>
+
+    <button class="btn" onclick="vucutAnaliz()">Vücudu Görsel Analiz Et</button>
   </div>
   <div class="card">
-    <div class="result" id="vucutSonuc">Vücut notunu yaz.</div>
+    <div class="result" id="vucutSonuc">Vücut fotoğrafı seç.</div>
+  </div>
+</section>
+
+<section id="hafiza">
+  <div class="card">
+    <h2>Görsel Hafıza</h2>
+    <p class="small">Yemek ve vücut analizlerin burada tutulur. İlk MVP’de sonuçlar cihazın tarayıcı hafızasında saklanır.</p>
+    <button class="btn secondary" onclick="hafizaGoster()">Hafızayı Yenile</button>
+    <button class="btn danger" onclick="hafizaTemizle()">Hafızayı Temizle</button>
+  </div>
+  <div class="card">
+    <div id="hafizaListesi" class="result">Henüz kayıt yok.</div>
   </div>
 </section>
 
@@ -290,6 +368,10 @@ function showPage(id, btn) {
   document.getElementById(id).classList.add("active");
   document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
+
+  if (id === "hafiza") {
+    hafizaGoster();
+  }
 }
 
 function val(id, def = 0) {
@@ -366,56 +448,166 @@ function panelGuncelle() {
 3) ${h.adim} adım hedefini tamamla.
 4) Antrenman günü ise minimum görev bile olsa zinciri kırma.` :
 "Önce profilini kur dostum.";
+
+  const memory = JSON.parse(localStorage.getItem("coachos_visual_memory") || "[]");
+  const mealCount = memory.filter(x => x.type === "meal").length;
+  const bodyCount = memory.filter(x => x.type === "body").length;
+  document.getElementById("memorySummary").textContent =
+    memory.length
+    ? `Toplam ${memory.length} görsel analiz var.\\nYemek: ${mealCount}\\nVücut: ${bodyCount}\\nSon kayıt: ${memory[0].date}`
+    : "Henüz görsel analiz yok.";
 }
 
-function yemekAnaliz() {
-  const y = text("yemekText").toLowerCase();
-  let protein = 20, karbonhidrat = 50, yag = 20;
-
-  if (y.includes("tavuk") || y.includes("et") || y.includes("ton") || y.includes("hindi")) protein += 25;
-  if (y.includes("pilav") || y.includes("makarna") || y.includes("ekmek") || y.includes("patates")) karbonhidrat += 35;
-  if (y.includes("kızart") || y.includes("yağ") || y.includes("sos")) yag += 15;
-
-  let kalori = protein * 4 + karbonhidrat * 4 + yag * 9;
-
-  document.getElementById("yemekSonuc").textContent =
-`Yemek Analizi:
-
-Tahmini kalori: ${kalori - 100}–${kalori + 150} kcal
-Protein: ${protein - 5}–${protein + 8} g
-Karbonhidrat: ${karbonhidrat - 10}–${karbonhidrat + 15} g
-Yağ: ${yag - 5}–${yag + 10} g
-
-Diyet uyumu: ${protein >= 35 ? "8/10" : "6/10"}
-
-Yorum:
-Bu tahmini analizdir. Gramaj netleşirse değerler daha doğru çıkar.
-
-Günün kalan önerisi:
-Protein düşükse 150–200 g tavuk, yoğurt veya ton balığı ekle.`;
+function previewImage(event, previewId) {
+  const file = event.target.files[0];
+  const img = document.getElementById(previewId);
+  if (!file || !img) return;
+  img.src = URL.createObjectURL(file);
+  img.style.display = "block";
 }
 
-function vucutAnaliz() {
-  const not = text("vucutText");
-  const h = JSON.parse(localStorage.getItem("coachos") || "{}");
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
-  document.getElementById("vucutSonuc").textContent =
-`Görsel Vücut Analizi:
+function hafizayaKaydet(type, result, note = "") {
+  const memory = JSON.parse(localStorage.getItem("coachos_visual_memory") || "[]");
 
-Kullanıcı notu:
-${not || "Not girilmedi."}
+  memory.unshift({
+    id: Date.now(),
+    type,
+    title: type === "meal" ? "Yemek Analizi" : "Vücut Analizi",
+    result,
+    note,
+    date: new Date().toLocaleString("tr-TR")
+  });
 
-Tahmini strateji:
-- Kalori: ${h.kalori || "-"} kcal
-- Protein: ${h.protein || "-"} g
-- Su: ${h.su || "-"} litre
-- Adım: ${h.adim || "8000+"}
+  localStorage.setItem("coachos_visual_memory", JSON.stringify(memory.slice(0, 50)));
+  panelGuncelle();
+}
 
-90 Günlük Hedef:
-Yağ kaybı + kas koruma. Ağırlık antrenmanı, yüksek protein ve düzenli takip.
+function hafizaGoster() {
+  const memory = JSON.parse(localStorage.getItem("coachos_visual_memory") || "[]");
+  const container = document.getElementById("hafizaListesi");
 
-Güvenlik notu:
-Bu tıbbi analiz değildir. Görsele/profil bilgisine göre fitness değerlendirmesidir.`;
+  if (!memory.length) {
+    container.innerHTML = "Henüz kayıt yok.";
+    return;
+  }
+
+  container.innerHTML = memory.map(item => `
+    <div class="memory-item">
+      <h3>${item.title}</h3>
+      <div class="memory-meta">${item.date}</div>
+      ${item.note ? `<div class="memory-meta">Not: ${escapeHtml(item.note)}</div>` : ""}
+      <div>${escapeHtml(item.result)}</div>
+    </div>
+  `).join("");
+}
+
+function hafizaTemizle() {
+  const ok = confirm("Görsel hafıza tamamen temizlensin mi?");
+  if (!ok) return;
+  localStorage.removeItem("coachos_visual_memory");
+  hafizaGoster();
+  panelGuncelle();
+}
+
+function escapeHtml(str) {
+  return String(str || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;")
+    .replaceAll("\\n", "<br>");
+}
+
+async function yemekAnaliz() {
+  const file = document.getElementById("mealImage").files[0];
+  const note = text("yemekText");
+  const sonucEl = document.getElementById("yemekSonuc");
+
+  if (!file) {
+    sonucEl.textContent = "Önce bir yemek fotoğrafı seç dostum.";
+    return;
+  }
+
+  sonucEl.textContent = "Yemek fotoğrafı analiz ediliyor...";
+
+  try {
+    const base64 = await fileToBase64(file);
+
+    const response = await fetch("/api/analyze", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        image: base64,
+        mode: "meal",
+        note
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      sonucEl.textContent = "Hata oluştu: " + (data.error || "Bilinmeyen hata");
+      return;
+    }
+
+    sonucEl.textContent = data.result;
+    hafizayaKaydet("meal", data.result, note);
+  } catch (error) {
+    sonucEl.textContent = "Analiz sırasında hata oluştu: " + error.message;
+  }
+}
+
+async function vucutAnaliz() {
+  const file = document.getElementById("bodyImage").files[0];
+  const note = text("vucutText");
+  const sonucEl = document.getElementById("vucutSonuc");
+
+  if (!file) {
+    sonucEl.textContent = "Önce bir vücut fotoğrafı seç dostum.";
+    return;
+  }
+
+  sonucEl.textContent = "Vücut fotoğrafı analiz ediliyor...";
+
+  try {
+    const base64 = await fileToBase64(file);
+
+    const response = await fetch("/api/analyze", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        image: base64,
+        mode: "body",
+        note
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      sonucEl.textContent = "Hata oluştu: " + (data.error || "Bilinmeyen hata");
+      return;
+    }
+
+    sonucEl.textContent = data.result;
+    hafizayaKaydet("body", data.result, note);
+  } catch (error) {
+    sonucEl.textContent = "Analiz sırasında hata oluştu: " + error.message;
+  }
 }
 
 function antrenmanOlustur() {
@@ -511,3 +703,188 @@ panelGuncelle();
 
 </body>
 </html>
+"""
+
+api_code = """export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Sadece POST isteği kabul edilir." });
+  }
+
+  try {
+    const { image, mode, note } = req.body;
+
+    if (!image || !mode) {
+      return res.status(400).json({
+        error: "Fotoğraf ve analiz tipi gerekli."
+      });
+    }
+
+    const apiKey = process.env.OPENAI_API_KEY;
+
+    if (!apiKey) {
+      return res.status(500).json({
+        error: "OPENAI_API_KEY Vercel Environment Variables içine eklenmemiş."
+      });
+    }
+
+    let prompt = "";
+
+    if (mode === "meal") {
+      prompt = `
+Sen CoachOS yemek görsel analiz motorusun.
+
+Görev:
+Kullanıcının yüklediği yemek fotoğrafını fitness/beslenme açısından analiz et.
+Kullanıcı notu: ${note || "Yok"}
+
+Kurallar:
+- Türkçe cevap ver.
+- Kesin değer verme, tahmini aralık ver.
+- Gramaj görünmüyorsa bunu belirt.
+- Tıbbi tavsiye verme.
+- Kullanıcıyı korkutma.
+- Kısa, net ve uygulanabilir cevap ver.
+
+Cevap formatı:
+
+Yemek Analizi:
+
+Tahmini kalori:
+Protein:
+Karbonhidrat:
+Yağ:
+Lif:
+Su oranı:
+Vitamin/mineral kalitesi:
+Diyet uyumu: /10
+
+Yorum:
+Kısa ve net yorum yap.
+
+Günün kalan önerisi:
+- Protein için öneri
+- Karbonhidrat/yağ dengeleme önerisi
+- Su önerisi
+
+Koç notu:
+Disiplinli ama motive edici kısa kapanış yap.
+
+Güvenlik notu:
+Bu analiz fotoğrafa göre tahminidir; kesin değer için gramaj gerekir.
+`;
+    } else if (mode === "body") {
+      prompt = `
+Sen CoachOS görsel vücut analiz motorusun.
+
+Görev:
+Kullanıcının yüklediği vücut fotoğrafını fitness hedefleri açısından analiz et.
+Kullanıcı notu: ${note || "Yok"}
+
+Kurallar:
+- Türkçe cevap ver.
+- Tıbbi teşhis koyma.
+- Kesin yağ oranı söyleme, tahmini aralık ver.
+- Kişinin kimliğini, yaşını veya hassas özelliklerini tahmin etme.
+- Görsele göre fitness odaklı değerlendirme yap.
+- Kırıcı, aşağılayıcı veya utandırıcı dil kullanma.
+- Hedef: yağ kaybı, kas koruma, postür ve antrenman stratejisi.
+
+Cevap formatı:
+
+Görsel Vücut Analizi:
+
+Tahmini yağ oranı:
+Kas kütlesi görünümü:
+Güçlü bölgeler:
+Gelişmesi gereken bölgeler:
+Postür/duruş:
+Hedefe göre yorum:
+
+90 Günlük Strateji:
+- Kalori:
+- Protein:
+- Antrenman:
+- Kardiyo/adım:
+- Uyku/su:
+
+Net koç yorumu:
+Kısa, motive edici ama disiplinli kapanış yap.
+
+Güvenlik notu:
+Bu analiz görsele göre tahminidir; tıbbi değerlendirme değildir.
+`;
+    } else {
+      return res.status(400).json({
+        error: "Geçersiz analiz tipi. mode 'meal' veya 'body' olmalı."
+      });
+    }
+
+    const openaiResponse = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4.1-mini",
+        input: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "input_text",
+                text: prompt
+              },
+              {
+                type: "input_image",
+                image_url: image
+              }
+            ]
+          }
+        ]
+      })
+    });
+
+    const data = await openaiResponse.json();
+
+    if (!openaiResponse.ok) {
+      return res.status(500).json({
+        error: "OpenAI API hatası.",
+        details: data
+      });
+    }
+
+    const result =
+      data.output_text ||
+      data.output?.[0]?.content?.[0]?.text ||
+      "Analiz sonucu alınamadı.";
+
+    return res.status(200).json({ result });
+
+  } catch (error) {
+    return res.status(500).json({
+      error: "Sunucu hatası.",
+      details: error.message
+    });
+  }
+}
+"""
+
+(out_dir / "index.html").write_text(index_code, encoding="utf-8")
+api_dir = out_dir / "api"
+api_dir.mkdir(parents=True)
+(api_dir / "analyze.js").write_text(api_code, encoding="utf-8")
+
+zip_path = Path("/mnt/data/coachos_visual_memory_update.zip")
+if zip_path.exists():
+    zip_path.unlink()
+
+with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
+    z.write(out_dir / "index.html", "index.html")
+    z.write(api_dir / "analyze.js", "api/analyze.js")
+
+print("Hazır:")
+print("/mnt/data/coachos_visual_memory_update/index.html")
+print("/mnt/data/coachos_visual_memory_update/api/analyze.js")
+print("/mnt/data/coachos_visual_memory_update.zip")
+
