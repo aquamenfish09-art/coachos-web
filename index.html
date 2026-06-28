@@ -1,697 +1,190 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CoachOS</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #080b12;
-      color: white;
-    }
-    header {
-      padding: 22px;
-      background: linear-gradient(135deg, #22c55e, #38bdf8);
-      color: #06131e;
-      font-weight: bold;
-      font-size: 26px;
-    }
-    nav {
-      display: flex;
-      overflow-x: auto;
-      gap: 8px;
-      padding: 12px;
-      background: #0f172a;
-    }
-    nav button {
-      border: 0;
-      padding: 12px 15px;
-      border-radius: 12px;
-      background: #1e293b;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    nav button.active {
-      background: #22c55e;
-      color: #06131e;
-    }
-    section {
-      display: none;
-      padding: 18px;
-    }
-    section.active {
-      display: block;
-    }
-    .card {
-      background: #111827;
-      border: 1px solid #253044;
-      border-radius: 18px;
-      padding: 18px;
-      margin-bottom: 15px;
-    }
-    input, select, textarea {
-      width: 100%;
-      padding: 13px;
-      margin: 8px 0 14px;
-      border-radius: 12px;
-      border: 1px solid #334155;
-      background: #020617;
-      color: white;
-      font-size: 16px;
-      box-sizing: border-box;
-    }
-    textarea { min-height: 90px; }
-    .btn {
-      width: 100%;
-      padding: 14px;
-      border: 0;
-      border-radius: 14px;
-      background: linear-gradient(135deg, #22c55e, #38bdf8);
-      color: #06131e;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 6px;
-    }
-    .btn.secondary {
-      background: #1e293b;
-      color: white;
-      border: 1px solid #334155;
-    }
-    .btn.danger {
-      background: linear-gradient(135deg, #fb7185, #f59e0b);
-      color: #111827;
-    }
-    .result {
-      background: #020617;
-      border: 1px solid #334155;
-      border-radius: 14px;
-      padding: 15px;
-      white-space: pre-wrap;
-      line-height: 1.5;
-      color: #dbeafe;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-    }
-    .stat {
-      background: #111827;
-      border: 1px solid #253044;
-      border-radius: 16px;
-      padding: 15px;
-    }
-    .stat b {
-      font-size: 24px;
-      display: block;
-      margin-top: 5px;
-      color: #22c55e;
-    }
-    .memory-item {
-      background: #020617;
-      border: 1px solid #334155;
-      border-radius: 16px;
-      padding: 14px;
-      margin-bottom: 12px;
-    }
-    .memory-item h3 {
-      margin: 0 0 8px;
-      color: #22c55e;
-    }
-    .memory-meta {
-      color: #94a3b8;
-      font-size: 13px;
-      margin-bottom: 10px;
-    }
-    .small {
-      color: #94a3b8;
-      font-size: 13px;
-      line-height: 1.5;
-    }
-    img.preview {
-      max-width: 100%;
-      border-radius: 14px;
-      border: 1px solid #334155;
-      margin: 8px 0 14px;
-      display: none;
-    }
-  </style>
-</head>
-<body>
+from pathlib import Path
 
-<header>CoachOS - AI Fitness Koçu</header>
+src = Path("/mnt/data/coachos_premium_ui_index.html")
+fallback = Path("/mnt/data/coachos_visual_memory_update/index.html")
 
-<nav>
-  <button class="active" onclick="showPage('panel', this)">Panel</button>
-  <button onclick="showPage('profil', this)">Profil</button>
-  <button onclick="showPage('yemek', this)">Yemek</button>
-  <button onclick="showPage('vucut', this)">Vücut</button>
-  <button onclick="showPage('hafiza', this)">Hafıza</button>
-  <button onclick="showPage('antrenman', this)">Antrenman</button>
-  <button onclick="showPage('motivasyon', this)">Motivasyon</button>
-  <button onclick="showPage('rapor', this)">Rapor</button>
-</nav>
+if src.exists():
+    html = src.read_text(encoding="utf-8")
+elif fallback.exists():
+    html = fallback.read_text(encoding="utf-8")
+else:
+    raise FileNotFoundError("Kaynak index bulunamadı")
 
-<section id="panel" class="active">
-  <div class="card">
-    <h2>Motivasyon biter, sistem devam eder.</h2>
-    <p>Profilini kur, CoachOS sana kalori, makro, antrenman, görsel analiz ve günlük görev çıkarır.</p>
-  </div>
+# Voice card for premium UI
+voice_card = '''
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3>Sesli Komut</h3>
+            <p class="hint">Örnek: “Yemek analizi aç”, “Bugün spora gitmek istemiyorum”, “Hafızamı göster”.</p>
+          </div>
+          <span class="badge">Gemini</span>
+        </div>
 
-  <div class="grid">
-    <div class="stat">Kalori <b id="pKalori">-</b></div>
-    <div class="stat">Protein <b id="pProtein">-</b></div>
-    <div class="stat">Su <b id="pSu">-</b></div>
-    <div class="stat">Adım <b id="pAdim">-</b></div>
-  </div>
+        <button class="btn" onclick="startVoiceCommand()">🎙 Konuş</button>
 
-  <div class="card">
-    <h3>Bugünün Görevi</h3>
-    <div class="result" id="gorev">Önce profilini kur dostum.</div>
-  </div>
+        <label style="margin-top:14px;">Yazılı komut</label>
+        <textarea id="voiceText" placeholder="Ses algılanmazsa komutu buraya yaz. Örnek: Antrenman oluştur"></textarea>
 
-  <div class="card">
-    <h3>Görsel Hafıza Özeti</h3>
-    <div class="result" id="memorySummary">Henüz görsel analiz yok.</div>
-  </div>
-</section>
+        <button class="btn secondary" onclick="sendTypedCommand()">Komutu Gönder</button>
 
-<section id="profil">
-  <div class="card">
-    <h2>Profil Kur</h2>
+        <div class="output" id="voiceResult" style="margin-top:14px;">Sesli komut bekleniyor.</div>
+      </div>
+'''
 
-    <label>Yaş</label>
-    <input id="yas" type="number" placeholder="18">
+# Insert voice card in panel section after hero block or before quick-grid
+if 'id="voiceText"' not in html:
+    marker = '<div class="quick-grid">'
+    if marker in html:
+        html = html.replace(marker, voice_card + "\n" + marker, 1)
+    else:
+        marker2 = '<section id="panel" class="page active">'
+        html = html.replace(marker2, marker2 + "\n" + voice_card, 1)
 
-    <label>Boy cm</label>
-    <input id="boy" type="number" placeholder="175">
+voice_js = r'''
+function getCoachOSProfileForGemini() {
+  return {
+    age: document.getElementById("yas")?.value || "",
+    height: document.getElementById("boy")?.value || "",
+    weight: document.getElementById("kilo")?.value || "",
+    sex: document.getElementById("cinsiyet")?.value || "",
+    goal: document.getElementById("hedef")?.value || "",
+    tempo: document.getElementById("tempo")?.value || "",
+    trainingDays: document.getElementById("sporGun")?.value || ""
+  };
+}
 
-    <label>Kilo kg</label>
-    <input id="kilo" type="number" placeholder="95">
-
-    <label>Cinsiyet</label>
-    <select id="cinsiyet">
-      <option>Erkek</option>
-      <option>Kadın</option>
-    </select>
-
-    <label>Hedef</label>
-    <select id="hedef">
-      <option>Yağ yakımı + kas koruma</option>
-      <option>Fit</option>
-      <option>Atletik</option>
-      <option>Kaslı</option>
-      <option>Kilo alma / kas kazanma</option>
-    </select>
-
-    <label>Günlük tempo</label>
-    <select id="tempo">
-      <option>Az</option>
-      <option selected>Orta</option>
-      <option>Yoğun</option>
-      <option>Çok aktif</option>
-    </select>
-
-    <label>Haftada kaç gün spor?</label>
-    <input id="sporGun" type="number" placeholder="4">
-
-    <button class="btn" onclick="profilKaydet()">Profili Kaydet</button>
-  </div>
-
-  <div class="card">
-    <h3>Sonuç</h3>
-    <div class="result" id="profilSonuc">Bilgileri girip kaydet.</div>
-  </div>
-</section>
-
-<section id="yemek">
-  <div class="card">
-    <h2>Yemek Görsel Analizi</h2>
-    <p class="small">Yemek fotoğrafı seç. CoachOS tahmini kalori, makro ve günün kalan önerisini çıkarır. Sonuç otomatik hafızaya kaydedilir.</p>
-
-    <label>Yemek fotoğrafı</label>
-    <input type="file" id="mealImage" accept="image/*" onchange="previewImage(event, 'mealPreview')">
-    <img id="mealPreview" class="preview">
-
-    <label>İsteğe bağlı not</label>
-    <textarea id="yemekText" placeholder="Örnek: 200 g tavuk, 150 g pilav, 1 kase yoğurt"></textarea>
-
-    <button class="btn" onclick="yemekAnaliz()">Yemeği Görsel Analiz Et</button>
-  </div>
-  <div class="card">
-    <div class="result" id="yemekSonuc">Yemek fotoğrafı seç.</div>
-  </div>
-</section>
-
-<section id="vucut">
-  <div class="card">
-    <h2>Vücut Görsel Analizi</h2>
-    <p class="small">Vücut fotoğrafı seç. CoachOS fitness odaklı tahmini analiz ve 90 günlük strateji çıkarır. Sonuç otomatik hafızaya kaydedilir.</p>
-
-    <label>Vücut fotoğrafı</label>
-    <input type="file" id="bodyImage" accept="image/*" onchange="previewImage(event, 'bodyPreview')">
-    <img id="bodyPreview" class="preview">
-
-    <label>İsteğe bağlı not</label>
-    <textarea id="vucutText" placeholder="Örnek: göbek-bel var, omuzlar iyi, göğüs zayıf, bacaklar güçlü..."></textarea>
-
-    <button class="btn" onclick="vucutAnaliz()">Vücudu Görsel Analiz Et</button>
-  </div>
-  <div class="card">
-    <div class="result" id="vucutSonuc">Vücut fotoğrafı seç.</div>
-  </div>
-</section>
-
-<section id="hafiza">
-  <div class="card">
-    <h2>Görsel Hafıza</h2>
-    <p class="small">Yemek ve vücut analizlerin burada tutulur. İlk MVP’de sonuçlar cihazın tarayıcı hafızasında saklanır.</p>
-    <button class="btn secondary" onclick="hafizaGoster()">Hafızayı Yenile</button>
-    <button class="btn danger" onclick="hafizaTemizle()">Hafızayı Temizle</button>
-  </div>
-  <div class="card">
-    <div id="hafizaListesi" class="result">Henüz kayıt yok.</div>
-  </div>
-</section>
-
-<section id="antrenman">
-  <div class="card">
-    <h2>Antrenman</h2>
-    <button class="btn" onclick="antrenmanOlustur()">Program Oluştur</button>
-  </div>
-  <div class="card">
-    <div class="result" id="antrenmanSonuc">Butona bas.</div>
-  </div>
-</section>
-
-<section id="motivasyon">
-  <div class="card">
-    <h2>Motivasyon + Disiplin</h2>
-    <textarea id="modText" placeholder="Bugün spora gitmek istemiyorum..."></textarea>
-    <button class="btn" onclick="motivasyonVer()">Koç Cevabı</button>
-  </div>
-  <div class="card">
-    <div class="result" id="motivasyonSonuc">Modunu yaz.</div>
-  </div>
-</section>
-
-<section id="rapor">
-  <div class="card">
-    <h2>Günlük Rapor</h2>
-
-    <label>Protein</label>
-    <select id="rProtein">
-      <option value="25">Tamam</option>
-      <option value="13">Kısmen</option>
-      <option value="0">Olmadı</option>
-    </select>
-
-    <label>Antrenman</label>
-    <select id="rAntrenman">
-      <option value="25">Yaptım</option>
-      <option value="13">Minimum görev</option>
-      <option value="0">Yapmadım</option>
-    </select>
-
-    <label>Kalori</label>
-    <select id="rKalori">
-      <option value="20">İyi</option>
-      <option value="10">Orta</option>
-      <option value="0">Dağıldı</option>
-    </select>
-
-    <label>Su</label>
-    <select id="rSu">
-      <option value="10">Tam</option>
-      <option value="5">Eksik</option>
-      <option value="0">Çok az</option>
-    </select>
-
-    <label>Adım</label>
-    <select id="rAdim">
-      <option value="10">Tam</option>
-      <option value="5">Eksik</option>
-      <option value="0">Çok az</option>
-    </select>
-
-    <label>Uyku</label>
-    <select id="rUyku">
-      <option value="10">İyi</option>
-      <option value="5">Orta</option>
-      <option value="0">Kötü</option>
-    </select>
-
-    <button class="btn" onclick="raporOlustur()">Rapor Oluştur</button>
-  </div>
-
-  <div class="card">
-    <div class="result" id="raporSonuc">Rapor burada çıkar.</div>
-  </div>
-</section>
-
-<script>
-function showPage(id, btn) {
-  document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-  document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
-  btn.classList.add("active");
-
-  if (id === "hafiza") {
-    hafizaGoster();
+function getCoachOSTargetsForGemini() {
+  try {
+    return JSON.parse(localStorage.getItem("coachos") || "{}");
+  } catch {
+    return {};
   }
 }
 
-function val(id, def = 0) {
-  const v = parseFloat(document.getElementById(id).value);
-  return isNaN(v) ? def : v;
-}
+async function sendCommandToGemini(command) {
+  const resultEl = document.getElementById("voiceResult");
+  const inputEl = document.getElementById("voiceText");
 
-function text(id) {
-  return document.getElementById(id).value.trim();
-}
+  if (!resultEl || !inputEl) return;
 
-function hesapla() {
-  const yas = val("yas", 18);
-  const boy = val("boy", 175);
-  const kilo = val("kilo", 95);
-  const cinsiyet = text("cinsiyet").toLowerCase();
-  const hedef = text("hedef").toLowerCase();
-  const tempo = text("tempo").toLowerCase();
-
-  let bmr = cinsiyet.includes("erkek")
-    ? 10 * kilo + 6.25 * boy - 5 * yas + 5
-    : 10 * kilo + 6.25 * boy - 5 * yas - 161;
-
-  let carp = 1.45;
-  if (tempo.includes("az")) carp = 1.35;
-  if (tempo.includes("orta")) carp = 1.55;
-  if (tempo.includes("yoğun") || tempo.includes("çok")) carp = 1.7;
-
-  let kalori = Math.round(bmr * carp - 450);
-  if (hedef.includes("kilo alma")) kalori = Math.round(bmr * carp + 250);
-
-  kalori = Math.max(kalori, cinsiyet.includes("erkek") ? 1700 : 1400);
-
-  let protein = Math.round(kilo * 1.8);
-  let yag = Math.round(kilo * 0.8);
-  let karbonhidrat = Math.max(Math.round((kalori - protein * 4 - yag * 9) / 4), 80);
-  let su = Math.round(kilo * 0.035 * 10) / 10;
-  let adim = hedef.includes("yağ") || hedef.includes("fit") ? 9000 : 7500;
-
-  return { kalori, protein, yag, karbonhidrat, su, adim };
-}
-
-function profilKaydet() {
-  const h = hesapla();
-  localStorage.setItem("coachos", JSON.stringify(h));
-
-  document.getElementById("profilSonuc").textContent =
-`Profil kaydedildi.
-
-Günlük hedefler:
-Kalori: ${h.kalori} kcal
-Protein: ${h.protein} g
-Karbonhidrat: ${h.karbonhidrat} g
-Yağ: ${h.yag} g
-Su: ${h.su} litre
-Adım: ${h.adim}
-
-Koç yorumu:
-Hedefin yağ kaybıysa ana strateji yüksek protein, kontrollü kalori ve düzenli ağırlık antrenmanı.`;
-
-  panelGuncelle();
-}
-
-function panelGuncelle() {
-  const h = JSON.parse(localStorage.getItem("coachos") || "{}");
-  document.getElementById("pKalori").textContent = h.kalori || "-";
-  document.getElementById("pProtein").textContent = h.protein ? h.protein + "g" : "-";
-  document.getElementById("pSu").textContent = h.su ? h.su + "L" : "-";
-  document.getElementById("pAdim").textContent = h.adim || "-";
-  document.getElementById("gorev").textContent = h.kalori ?
-`Bugünün görevi:
-1) ${h.protein} g proteine yaklaş.
-2) ${h.su} litre suyu bitir.
-3) ${h.adim} adım hedefini tamamla.
-4) Antrenman günü ise minimum görev bile olsa zinciri kırma.` :
-"Önce profilini kur dostum.";
-
-  const memory = JSON.parse(localStorage.getItem("coachos_visual_memory") || "[]");
-  const mealCount = memory.filter(x => x.type === "meal").length;
-  const bodyCount = memory.filter(x => x.type === "body").length;
-  document.getElementById("memorySummary").textContent =
-    memory.length
-    ? `Toplam ${memory.length} görsel analiz var.\\nYemek: ${mealCount}\\nVücut: ${bodyCount}\\nSon kayıt: ${memory[0].date}`
-    : "Henüz görsel analiz yok.";
-}
-
-function previewImage(event, previewId) {
-  const file = event.target.files[0];
-  const img = document.getElementById(previewId);
-  if (!file || !img) return;
-  img.src = URL.createObjectURL(file);
-  img.style.display = "block";
-}
-
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-function hafizayaKaydet(type, result, note = "") {
-  const memory = JSON.parse(localStorage.getItem("coachos_visual_memory") || "[]");
-
-  memory.unshift({
-    id: Date.now(),
-    type,
-    title: type === "meal" ? "Yemek Analizi" : "Vücut Analizi",
-    result,
-    note,
-    date: new Date().toLocaleString("tr-TR")
-  });
-
-  localStorage.setItem("coachos_visual_memory", JSON.stringify(memory.slice(0, 50)));
-  panelGuncelle();
-}
-
-function hafizaGoster() {
-  const memory = JSON.parse(localStorage.getItem("coachos_visual_memory") || "[]");
-  const container = document.getElementById("hafizaListesi");
-
-  if (!memory.length) {
-    container.innerHTML = "Henüz kayıt yok.";
+  if (!command || !command.trim()) {
+    resultEl.textContent = "Komut boş. Örnek: Yemek analizi aç.";
     return;
   }
 
-  container.innerHTML = memory.map(item => `
-    <div class="memory-item">
-      <h3>${item.title}</h3>
-      <div class="memory-meta">${item.date}</div>
-      ${item.note ? `<div class="memory-meta">Not: ${escapeHtml(item.note)}</div>` : ""}
-      <div>${escapeHtml(item.result)}</div>
-    </div>
-  `).join("");
-}
-
-function hafizaTemizle() {
-  const ok = confirm("Görsel hafıza tamamen temizlensin mi?");
-  if (!ok) return;
-  localStorage.removeItem("coachos_visual_memory");
-  hafizaGoster();
-  panelGuncelle();
-}
-
-function escapeHtml(str) {
-  return String(str || "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;")
-    .replaceAll("\\n", "<br>");
-}
-
-async function yemekAnaliz() {
-  const file = document.getElementById("mealImage").files[0];
-  const note = text("yemekText");
-  const sonucEl = document.getElementById("yemekSonuc");
-
-  if (!file) {
-    sonucEl.textContent = "Önce bir yemek fotoğrafı seç dostum.";
-    return;
-  }
-
-  sonucEl.textContent = "Yemek fotoğrafı analiz ediliyor...";
+  inputEl.value = command;
+  resultEl.textContent = "Gemini komutu yorumluyor...";
 
   try {
-    const base64 = await fileToBase64(file);
-
-    const response = await fetch("/api/analyze", {
+    const response = await fetch("/api/gemini-command", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        image: base64,
-        mode: "meal",
-        note
+        command,
+        profile: getCoachOSProfileForGemini(),
+        targets: getCoachOSTargetsForGemini()
       })
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      sonucEl.textContent = "Hata oluştu: " + (data.error || "Bilinmeyen hata");
+      resultEl.textContent = "Hata: " + (data.error || "Gemini komutu çalışmadı.");
       return;
     }
 
-    sonucEl.textContent = data.result;
-    hafizayaKaydet("meal", data.result, note);
+    resultEl.textContent = data.message || "Komut alındı.";
+
+    if (data.action === "open_page" && data.page) {
+      showPage(data.page);
+      return;
+    }
+
+    if (data.action === "motivate") {
+      showPage("motivasyon");
+      const moodBox = document.getElementById("modText");
+      if (moodBox) moodBox.value = command;
+      motivasyonVer();
+      return;
+    }
+
+    if (data.action === "create_workout") {
+      showPage("antrenman");
+      antrenmanOlustur();
+      return;
+    }
+
+    if (data.action === "show_memory") {
+      showPage("hafiza");
+      hafizaGoster();
+      return;
+    }
+
+    if (data.action === "show_report") {
+      showPage("rapor");
+      return;
+    }
+
+    if (data.page) {
+      showPage(data.page);
+      return;
+    }
+
   } catch (error) {
-    sonucEl.textContent = "Analiz sırasında hata oluştu: " + error.message;
+    resultEl.textContent = "Komut sırasında hata oluştu: " + error.message;
   }
 }
 
-async function vucutAnaliz() {
-  const file = document.getElementById("bodyImage").files[0];
-  const note = text("vucutText");
-  const sonucEl = document.getElementById("vucutSonuc");
+function sendTypedCommand() {
+  const command = document.getElementById("voiceText")?.value || "";
+  sendCommandToGemini(command);
+}
 
-  if (!file) {
-    sonucEl.textContent = "Önce bir vücut fotoğrafı seç dostum.";
+function startVoiceCommand() {
+  const resultEl = document.getElementById("voiceResult");
+
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    resultEl.textContent =
+      "Bu tarayıcı ses tanımayı desteklemiyor. Komutu yazı olarak gir.";
     return;
   }
 
-  sonucEl.textContent = "Vücut fotoğrafı analiz ediliyor...";
+  const recognition = new SpeechRecognition();
+  recognition.lang = "tr-TR";
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
 
-  try {
-    const base64 = await fileToBase64(file);
+  resultEl.textContent = "Dinliyorum...";
 
-    const response = await fetch("/api/analyze", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        image: base64,
-        mode: "body",
-        note
-      })
-    });
+  recognition.onresult = function(event) {
+    const command = event.results[0][0].transcript;
+    sendCommandToGemini(command);
+  };
 
-    const data = await response.json();
+  recognition.onerror = function(event) {
+    resultEl.textContent =
+      "Ses algılanamadı. Hata: " + event.error + ". Komutu yazı olarak da girebilirsin.";
+  };
 
-    if (!response.ok) {
-      sonucEl.textContent = "Hata oluştu: " + (data.error || "Bilinmeyen hata");
-      return;
-    }
-
-    sonucEl.textContent = data.result;
-    hafizayaKaydet("body", data.result, note);
-  } catch (error) {
-    sonucEl.textContent = "Analiz sırasında hata oluştu: " + error.message;
-  }
+  recognition.start();
 }
 
-function antrenmanOlustur() {
-  const gun = val("sporGun", 4);
+'''
 
-  document.getElementById("antrenmanSonuc").textContent =
-gun <= 3 ?
-`Full Body Program:
+# Insert JS before panelGuncelle(); once
+if "function getCoachOSProfileForGemini" not in html:
+    html = html.replace("panelGuncelle();", voice_js + "\npanelGuncelle();", 1)
 
-1. Squat / Leg Press — 3x8-12
-2. Dumbbell Bench Press — 3x8-12
-3. Lat Pulldown — 3x8-12
-4. Shoulder Press — 3x8-10
-5. Cable Row — 3x10-12
-6. Plank — 3x30-45 sn
+out = Path("/mnt/data/coachos_final_index_voice_memory.html")
+out.write_text(html, encoding="utf-8")
 
-Kardiyo:
-15-25 dk yürüyüş.
+print("Final index hazır:")
+print(out)
+print("Boyut:", out.stat().st_size)
 
-Bugün amaç ego değil, kaliteli tekrar.` :
-`Upper / Lower Program:
-
-Üst Gün:
-- Bench Press 4x6-10
-- Lat Pulldown 4x8-12
-- Shoulder Press 3x8-10
-- Cable Row 3x10-12
-- Lateral Raise 3x12-15
-- Kol çalışması 2-3 set
-
-Alt Gün:
-- Squat / Leg Press 4x8-12
-- Romanian Deadlift 3x8-10
-- Leg Curl 3x10-12
-- Calf Raise 4x12-15
-- Plank 3 set
-
-Yorgun gün:
-3 ana hareket + 15 dk yürüyüş. Zincir kırılmayacak.`;
-}
-
-function motivasyonVer() {
-  const mod = text("modText");
-
-  document.getElementById("motivasyonSonuc").textContent =
-`Modunu kabul ediyorum:
-"${mod || "Bugün spora gitmek istemiyorum."}"
-
-Ama sistem şöyle çalışıyor:
-Motivasyon yoksa minimum disiplin var.
-
-Bugünkü minimum görev:
-- 5 dakika ısın
-- 3 hareket yap
-- 10 dakika yürü
-
-Tam performans beklemiyorum.
-Sadece zinciri kırma.
-
-Bugün kazanan kişi canı istediği için değil, söz verdiği için yapan kişidir.`;
-}
-
-function raporOlustur() {
-  const puan =
-    Number(text("rProtein")) +
-    Number(text("rAntrenman")) +
-    Number(text("rKalori")) +
-    Number(text("rSu")) +
-    Number(text("rAdim")) +
-    Number(text("rUyku"));
-
-  let yorum = "Dağıldı ama bitti değil. Yarın minimum görevle sisteme dön.";
-  if (puan >= 80) yorum = "Güzel gün. Böyle devam.";
-  else if (puan >= 60) yorum = "Orta gün. Zincir kırılmadı ama yarın daha net olacağız.";
-
-  document.getElementById("raporSonuc").textContent =
-`Bugünkü Puan: ${puan}/100
-
-Yorum:
-${yorum}
-
-Yarın için net görev:
-- Protein hedefini öne al
-- Suyu gün içine yay
-- 20 dakika yürüyüş ekle
-- Antrenman kaçarsa minimum görev yap
-
-Mükemmel gün aramıyoruz. Sistemi bırakmayan kazanır.`;
-}
-
-panelGuncelle();
-</script>
-
-</body>
-</html>
