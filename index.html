@@ -1,56 +1,818 @@
-from pathlib import Path
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CoachOS</title>
 
-src = Path("/mnt/data/coachos_premium_ui_index.html")
-fallback = Path("/mnt/data/coachos_visual_memory_update/index.html")
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-if src.exists():
-    html = src.read_text(encoding="utf-8")
-elif fallback.exists():
-    html = fallback.read_text(encoding="utf-8")
-else:
-    raise FileNotFoundError("Kaynak index bulunamadı")
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #080b12;
+      color: white;
+    }
 
-# Voice card for premium UI
-voice_card = '''
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <h3>Sesli Komut</h3>
-            <p class="hint">Örnek: “Yemek analizi aç”, “Bugün spora gitmek istemiyorum”, “Hafızamı göster”.</p>
-          </div>
-          <span class="badge">Gemini</span>
-        </div>
+    header {
+      padding: 20px;
+      background: linear-gradient(135deg, #22c55e, #38bdf8);
+      color: #06131e;
+      font-size: 24px;
+      font-weight: 900;
+    }
 
-        <button class="btn" onclick="startVoiceCommand()">🎙 Konuş</button>
+    nav {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 10px;
+      background: #0f172a;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
 
-        <label style="margin-top:14px;">Yazılı komut</label>
-        <textarea id="voiceText" placeholder="Ses algılanmazsa komutu buraya yaz. Örnek: Antrenman oluştur"></textarea>
+    nav button {
+      border: 0;
+      border-radius: 12px;
+      background: #1e293b;
+      color: white;
+      padding: 11px 13px;
+      font-weight: 800;
+      white-space: nowrap;
+      cursor: pointer;
+    }
 
-        <button class="btn secondary" onclick="sendTypedCommand()">Komutu Gönder</button>
+    nav button.active {
+      background: #22c55e;
+      color: #06131e;
+    }
 
-        <div class="output" id="voiceResult" style="margin-top:14px;">Sesli komut bekleniyor.</div>
-      </div>
-'''
+    section {
+      display: none;
+      padding: 15px;
+      max-width: 900px;
+      margin: auto;
+    }
 
-# Insert voice card in panel section after hero block or before quick-grid
-if 'id="voiceText"' not in html:
-    marker = '<div class="quick-grid">'
-    if marker in html:
-        html = html.replace(marker, voice_card + "\n" + marker, 1)
-    else:
-        marker2 = '<section id="panel" class="page active">'
-        html = html.replace(marker2, marker2 + "\n" + voice_card, 1)
+    section.active {
+      display: block;
+    }
 
-voice_js = r'''
+    .card {
+      background: #111827;
+      border: 1px solid #253044;
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    h2, h3 {
+      margin-top: 0;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 13px;
+      margin: 7px 0 13px;
+      border-radius: 13px;
+      border: 1px solid #334155;
+      background: #020617;
+      color: white;
+      font-size: 15px;
+    }
+
+    textarea {
+      min-height: 90px;
+    }
+
+    .btn {
+      width: 100%;
+      border: 0;
+      border-radius: 14px;
+      padding: 14px;
+      margin: 5px 0;
+      background: linear-gradient(135deg, #22c55e, #38bdf8);
+      font-weight: 900;
+      color: #06131e;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .btn.secondary {
+      background: #1e293b;
+      color: white;
+      border: 1px solid #334155;
+    }
+
+    .btn.danger {
+      background: linear-gradient(135deg, #fb7185, #f59e0b);
+      color: #111827;
+    }
+
+    .result {
+      white-space: pre-wrap;
+      background: #020617;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 14px;
+      line-height: 1.5;
+      color: #dbeafe;
+      overflow-wrap: break-word;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .stat {
+      background: #111827;
+      border: 1px solid #253044;
+      border-radius: 15px;
+      padding: 14px;
+    }
+
+    .stat b {
+      display: block;
+      color: #22c55e;
+      font-size: 22px;
+      margin-top: 5px;
+    }
+
+    img.preview {
+      max-width: 100%;
+      border-radius: 14px;
+      border: 1px solid #334155;
+      display: none;
+      margin: 8px 0 14px;
+    }
+
+    .small {
+      color: #94a3b8;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .memory-item {
+      background: #020617;
+      border: 1px solid #334155;
+      border-radius: 15px;
+      padding: 13px;
+      margin-bottom: 12px;
+    }
+
+    .memory-item h3 {
+      color: #22c55e;
+      margin: 0 0 6px;
+    }
+
+    @media(min-width:800px) {
+      .two {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      .grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>CoachOS - AI Fitness Koçu</header>
+
+<nav>
+  <button class="active" onclick="showPage('panel', this)">Panel</button>
+  <button onclick="showPage('profil', this)">Profil</button>
+  <button onclick="showPage('yemek', this)">Yemek</button>
+  <button onclick="showPage('vucut', this)">Vücut</button>
+  <button onclick="showPage('hafiza', this)">Hafıza</button>
+  <button onclick="showPage('antrenman', this)">Antrenman</button>
+  <button onclick="showPage('motivasyon', this)">Motivasyon</button>
+  <button onclick="showPage('rapor', this)">Rapor</button>
+</nav>
+
+<section id="panel" class="active">
+  <div class="card">
+    <h2>Motivasyon biter, sistem devam eder.</h2>
+    <p class="small">
+      Profilini kur. CoachOS sana kalori, makro, görsel analiz, hafıza, antrenman ve günlük görev çıkarır.
+    </p>
+  </div>
+
+  <div class="grid">
+    <div class="stat">Kalori <b id="pKalori">-</b></div>
+    <div class="stat">Protein <b id="pProtein">-</b></div>
+    <div class="stat">Su <b id="pSu">-</b></div>
+    <div class="stat">Adım <b id="pAdim">-</b></div>
+  </div>
+
+  <div class="card">
+    <h3>Sesli / Yazılı Komut</h3>
+    <p class="small">
+      Örnek: “Yemek analizi aç”, “Hafızamı göster”, “Bugün spora gitmek istemiyorum”.
+    </p>
+
+    <button class="btn" onclick="startVoiceCommand()">🎙 Konuş</button>
+
+    <textarea id="voiceText" placeholder="Ses algılanmazsa komutu buraya yaz."></textarea>
+
+    <button class="btn secondary" onclick="sendTypedCommand()">Komutu Gönder</button>
+
+    <div class="result" id="voiceResult">Komut bekleniyor.</div>
+  </div>
+
+  <div class="card">
+    <h3>Bugünün Görevi</h3>
+    <div class="result" id="gorev">Önce profilini kur dostum.</div>
+  </div>
+
+  <div class="card">
+    <h3>Görsel Hafıza Özeti</h3>
+    <div class="result" id="memorySummary">Henüz görsel analiz yok.</div>
+  </div>
+</section>
+
+<section id="profil">
+  <div class="card">
+    <h2>Profil Kur</h2>
+
+    <label>Yaş</label>
+    <input id="yas" type="number" placeholder="18">
+
+    <label>Boy cm</label>
+    <input id="boy" type="number" placeholder="175">
+
+    <label>Kilo kg</label>
+    <input id="kilo" type="number" placeholder="95">
+
+    <label>Cinsiyet</label>
+    <select id="cinsiyet">
+      <option>Erkek</option>
+      <option>Kadın</option>
+    </select>
+
+    <label>Hedef</label>
+    <select id="hedef">
+      <option>Yağ yakımı + kas koruma</option>
+      <option>Fit</option>
+      <option>Atletik</option>
+      <option>Kaslı</option>
+      <option>Kilo alma / kas kazanma</option>
+    </select>
+
+    <label>Günlük tempo</label>
+    <select id="tempo">
+      <option>Az</option>
+      <option selected>Orta</option>
+      <option>Yoğun</option>
+      <option>Çok aktif</option>
+    </select>
+
+    <label>Haftada kaç gün spor?</label>
+    <input id="sporGun" type="number" placeholder="4">
+
+    <button class="btn" onclick="profilKaydet()">Profili Kaydet</button>
+  </div>
+
+  <div class="card">
+    <h3>Sonuç</h3>
+    <div class="result" id="profilSonuc">Bilgileri girip kaydet.</div>
+  </div>
+</section>
+
+<section id="yemek">
+  <div class="two">
+    <div class="card">
+      <h2>Yemek Görsel Analizi</h2>
+      <p class="small">
+        Yemek fotoğrafı seç. Analiz sonucu otomatik hafızaya kaydedilir.
+      </p>
+
+      <label>Yemek fotoğrafı</label>
+      <input type="file" id="mealImage" accept="image/*" onchange="previewImage(event, 'mealPreview')">
+
+      <img id="mealPreview" class="preview">
+
+      <label>İsteğe bağlı not</label>
+      <textarea id="yemekText" placeholder="Örnek: tavuk, pilav, yoğurt"></textarea>
+
+      <button class="btn" onclick="yemekAnaliz()">Yemeği Analiz Et</button>
+    </div>
+
+    <div class="card">
+      <h3>Analiz Sonucu</h3>
+      <div class="result" id="yemekSonuc">Yemek fotoğrafı seç.</div>
+    </div>
+  </div>
+</section>
+
+<section id="vucut">
+  <div class="two">
+    <div class="card">
+      <h2>Vücut Görsel Analizi</h2>
+      <p class="small">
+        Fitness odaklı tahmini analiz ve 90 günlük strateji çıkarır.
+      </p>
+
+      <label>Vücut fotoğrafı</label>
+      <input type="file" id="bodyImage" accept="image/*" onchange="previewImage(event, 'bodyPreview')">
+
+      <img id="bodyPreview" class="preview">
+
+      <label>İsteğe bağlı not</label>
+      <textarea id="vucutText" placeholder="Örnek: göbek-bel var, omuzlar iyi..."></textarea>
+
+      <button class="btn" onclick="vucutAnaliz()">Vücudu Analiz Et</button>
+    </div>
+
+    <div class="card">
+      <h3>Analiz Sonucu</h3>
+      <div class="result" id="vucutSonuc">Vücut fotoğrafı seç.</div>
+    </div>
+  </div>
+</section>
+
+<section id="hafiza">
+  <div class="card">
+    <h2>Görsel Hafıza</h2>
+    <p class="small">
+      Yemek ve vücut analiz geçmişin burada tutulur.
+    </p>
+
+    <button class="btn secondary" onclick="hafizaGoster()">Yenile</button>
+    <button class="btn danger" onclick="hafizaTemizle()">Hafızayı Temizle</button>
+  </div>
+
+  <div class="card">
+    <div id="hafizaListesi" class="result">Henüz kayıt yok.</div>
+  </div>
+</section>
+
+<section id="antrenman">
+  <div class="card">
+    <h2>Antrenman</h2>
+    <button class="btn" onclick="antrenmanOlustur()">Program Oluştur</button>
+  </div>
+
+  <div class="card">
+    <div class="result" id="antrenmanSonuc">Butona bas.</div>
+  </div>
+</section>
+
+<section id="motivasyon">
+  <div class="card">
+    <h2>Motivasyon + Disiplin</h2>
+    <textarea id="modText" placeholder="Bugün spora gitmek istemiyorum..."></textarea>
+    <button class="btn" onclick="motivasyonVer()">Koç Cevabı</button>
+  </div>
+
+  <div class="card">
+    <div class="result" id="motivasyonSonuc">Modunu yaz.</div>
+  </div>
+</section>
+
+<section id="rapor">
+  <div class="card">
+    <h2>Günlük Rapor</h2>
+
+    <label>Protein</label>
+    <select id="rProtein">
+      <option value="25">Tamam</option>
+      <option value="13">Kısmen</option>
+      <option value="0">Olmadı</option>
+    </select>
+
+    <label>Antrenman</label>
+    <select id="rAntrenman">
+      <option value="25">Yaptım</option>
+      <option value="13">Minimum görev</option>
+      <option value="0">Yapmadım</option>
+    </select>
+
+    <label>Kalori</label>
+    <select id="rKalori">
+      <option value="20">İyi</option>
+      <option value="10">Orta</option>
+      <option value="0">Dağıldı</option>
+    </select>
+
+    <label>Su</label>
+    <select id="rSu">
+      <option value="10">Tam</option>
+      <option value="5">Eksik</option>
+      <option value="0">Çok az</option>
+    </select>
+
+    <label>Adım</label>
+    <select id="rAdim">
+      <option value="10">Tam</option>
+      <option value="5">Eksik</option>
+      <option value="0">Çok az</option>
+    </select>
+
+    <label>Uyku</label>
+    <select id="rUyku">
+      <option value="10">İyi</option>
+      <option value="5">Orta</option>
+      <option value="0">Kötü</option>
+    </select>
+
+    <button class="btn" onclick="raporOlustur()">Rapor Oluştur</button>
+  </div>
+
+  <div class="card">
+    <div class="result" id="raporSonuc">Rapor burada çıkar.</div>
+  </div>
+</section>
+
+<script>
+function showPage(id, btn) {
+  document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+
+  document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+  if (btn) btn.classList.add("active");
+
+  if (id === "hafiza") hafizaGoster();
+
+  window.scrollTo(0, 0);
+}
+
+function goPage(id) {
+  document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+
+  document.querySelectorAll("nav button").forEach(b => {
+    const oc = b.getAttribute("onclick") || "";
+    b.classList.toggle("active", oc.includes("'" + id + "'"));
+  });
+
+  if (id === "hafiza") hafizaGoster();
+
+  window.scrollTo(0, 0);
+}
+
+function val(id, def = 0) {
+  const v = parseFloat(document.getElementById(id).value);
+  return isNaN(v) ? def : v;
+}
+
+function text(id) {
+  return (document.getElementById(id)?.value || "").trim();
+}
+
+function hesapla() {
+  const yas = val("yas", 18);
+  const boy = val("boy", 175);
+  const kilo = val("kilo", 95);
+  const cinsiyet = text("cinsiyet").toLowerCase();
+  const hedef = text("hedef").toLowerCase();
+  const tempo = text("tempo").toLowerCase();
+
+  let bmr = cinsiyet.includes("erkek")
+    ? 10 * kilo + 6.25 * boy - 5 * yas + 5
+    : 10 * kilo + 6.25 * boy - 5 * yas - 161;
+
+  let carp = 1.45;
+
+  if (tempo.includes("az")) carp = 1.35;
+  if (tempo.includes("orta")) carp = 1.55;
+  if (tempo.includes("yoğun") || tempo.includes("çok")) carp = 1.7;
+
+  let kalori = Math.round(bmr * carp - 450);
+
+  if (hedef.includes("kilo alma")) {
+    kalori = Math.round(bmr * carp + 250);
+  }
+
+  kalori = Math.max(kalori, cinsiyet.includes("erkek") ? 1700 : 1400);
+
+  const protein = Math.round(kilo * 1.8);
+  const yag = Math.round(kilo * 0.8);
+  const karbonhidrat = Math.max(Math.round((kalori - protein * 4 - yag * 9) / 4), 80);
+  const su = Math.round(kilo * 0.035 * 10) / 10;
+  const adim = hedef.includes("yağ") || hedef.includes("fit") ? 9000 : 7500;
+
+  return {
+    kalori,
+    protein,
+    yag,
+    karbonhidrat,
+    su,
+    adim
+  };
+}
+
+function profilKaydet() {
+  const h = hesapla();
+
+  localStorage.setItem("coachos", JSON.stringify(h));
+
+  document.getElementById("profilSonuc").textContent =
+`Profil kaydedildi.
+
+Kalori: ${h.kalori} kcal
+Protein: ${h.protein} g
+Karbonhidrat: ${h.karbonhidrat} g
+Yağ: ${h.yag} g
+Su: ${h.su} litre
+Adım: ${h.adim}
+
+Koç yorumu:
+Yüksek protein, kontrollü kalori ve düzenli ağırlık antrenmanı.`;
+
+  panelGuncelle();
+  goPage("panel");
+}
+
+function panelGuncelle() {
+  const h = JSON.parse(localStorage.getItem("coachos") || "{}");
+
+  document.getElementById("pKalori").textContent = h.kalori || "-";
+  document.getElementById("pProtein").textContent = h.protein ? h.protein + "g" : "-";
+  document.getElementById("pSu").textContent = h.su ? h.su + "L" : "-";
+  document.getElementById("pAdim").textContent = h.adim || "-";
+
+  document.getElementById("gorev").textContent = h.kalori ?
+`Bugünün görevi:
+1) ${h.protein} g proteine yaklaş.
+2) ${h.su} litre suyu bitir.
+3) ${h.adim} adım hedefini tamamla.
+4) Zinciri kırma.` :
+"Önce profilini kur dostum.";
+
+  const memory = JSON.parse(localStorage.getItem("coachos_visual_memory") || "[]");
+  const meal = memory.filter(x => x.type === "meal").length;
+  const body = memory.filter(x => x.type === "body").length;
+
+  document.getElementById("memorySummary").textContent = memory.length ?
+`Toplam ${memory.length} analiz var.
+Yemek: ${meal}
+Vücut: ${body}
+Son kayıt: ${memory[0].date}` :
+"Henüz görsel analiz yok.";
+}
+
+function previewImage(event, id) {
+  const file = event.target.files[0];
+  const img = document.getElementById(id);
+
+  if (!file || !img) return;
+
+  img.src = URL.createObjectURL(file);
+  img.style.display = "block";
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function hafizayaKaydet(type, result, note = "") {
+  const memory = JSON.parse(localStorage.getItem("coachos_visual_memory") || "[]");
+
+  memory.unshift({
+    id: Date.now(),
+    type,
+    title: type === "meal" ? "Yemek Analizi" : "Vücut Analizi",
+    result,
+    note,
+    date: new Date().toLocaleString("tr-TR")
+  });
+
+  localStorage.setItem("coachos_visual_memory", JSON.stringify(memory.slice(0, 50)));
+
+  panelGuncelle();
+}
+
+function escapeHtml(str) {
+  return String(str || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;")
+    .replaceAll("\n", "<br>");
+}
+
+function hafizaGoster() {
+  const memory = JSON.parse(localStorage.getItem("coachos_visual_memory") || "[]");
+  const c = document.getElementById("hafizaListesi");
+
+  if (!memory.length) {
+    c.innerHTML = "Henüz kayıt yok.";
+    return;
+  }
+
+  c.innerHTML = memory.map(item => `
+    <div class="memory-item">
+      <h3>${item.title}</h3>
+      <div class="small">${item.date}</div>
+      ${item.note ? `<div class="small">Not: ${escapeHtml(item.note)}</div>` : ""}
+      <div>${escapeHtml(item.result)}</div>
+    </div>
+  `).join("");
+}
+
+function hafizaTemizle() {
+  if (!confirm("Görsel hafıza temizlensin mi?")) return;
+
+  localStorage.removeItem("coachos_visual_memory");
+
+  hafizaGoster();
+  panelGuncelle();
+}
+
+async function yemekAnaliz() {
+  const file = document.getElementById("mealImage").files[0];
+  const note = text("yemekText");
+  const out = document.getElementById("yemekSonuc");
+
+  if (!file) {
+    out.textContent = "Önce bir yemek fotoğrafı seç dostum.";
+    return;
+  }
+
+  out.textContent = "Yemek fotoğrafı analiz ediliyor...";
+
+  try {
+    const image = await fileToBase64(file);
+
+    const r = await fetch("/api/analyze", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        image,
+        mode: "meal",
+        note
+      })
+    });
+
+    const data = await r.json();
+
+    if (!r.ok) {
+      out.textContent = "Hata: " + (data.error || "Analiz çalışmadı.");
+      return;
+    }
+
+    out.textContent = data.result;
+
+    hafizayaKaydet("meal", data.result, note);
+
+  } catch (e) {
+    out.textContent = "Analiz hatası: " + e.message;
+  }
+}
+
+async function vucutAnaliz() {
+  const file = document.getElementById("bodyImage").files[0];
+  const note = text("vucutText");
+  const out = document.getElementById("vucutSonuc");
+
+  if (!file) {
+    out.textContent = "Önce bir vücut fotoğrafı seç dostum.";
+    return;
+  }
+
+  out.textContent = "Vücut fotoğrafı analiz ediliyor...";
+
+  try {
+    const image = await fileToBase64(file);
+
+    const r = await fetch("/api/analyze", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        image,
+        mode: "body",
+        note
+      })
+    });
+
+    const data = await r.json();
+
+    if (!r.ok) {
+      out.textContent = "Hata: " + (data.error || "Analiz çalışmadı.");
+      return;
+    }
+
+    out.textContent = data.result;
+
+    hafizayaKaydet("body", data.result, note);
+
+  } catch (e) {
+    out.textContent = "Analiz hatası: " + e.message;
+  }
+}
+
+function antrenmanOlustur() {
+  const gun = val("sporGun", 4);
+
+  document.getElementById("antrenmanSonuc").textContent = gun <= 3 ?
+`Full Body Program:
+
+1. Squat / Leg Press — 3x8-12
+2. Dumbbell Bench Press — 3x8-12
+3. Lat Pulldown — 3x8-12
+4. Shoulder Press — 3x8-10
+5. Cable Row — 3x10-12
+6. Plank — 3x30-45 sn
+
+Kardiyo:
+15-25 dk yürüyüş.` :
+`Upper / Lower Program:
+
+Üst Gün:
+- Bench Press 4x6-10
+- Lat Pulldown 4x8-12
+- Shoulder Press 3x8-10
+- Cable Row 3x10-12
+- Lateral Raise 3x12-15
+
+Alt Gün:
+- Squat / Leg Press 4x8-12
+- Romanian Deadlift 3x8-10
+- Leg Curl 3x10-12
+- Calf Raise 4x12-15
+
+Yorgun gün:
+3 ana hareket + 15 dk yürüyüş.`;
+}
+
+function motivasyonVer() {
+  const mod = text("modText") || "Bugün spora gitmek istemiyorum.";
+
+  document.getElementById("motivasyonSonuc").textContent =
+`Modunu kabul ediyorum:
+"${mod}"
+
+Ama sistem şöyle çalışıyor:
+Motivasyon yoksa minimum disiplin var.
+
+Bugünkü minimum görev:
+- 5 dakika ısın
+- 3 hareket yap
+- 10 dakika yürü
+
+Tam performans beklemiyorum.
+Sadece zinciri kırma.`;
+}
+
+function raporOlustur() {
+  const puan =
+    Number(text("rProtein")) +
+    Number(text("rAntrenman")) +
+    Number(text("rKalori")) +
+    Number(text("rSu")) +
+    Number(text("rAdim")) +
+    Number(text("rUyku"));
+
+  let yorum = "Dağıldı ama bitti değil. Yarın minimum görevle sisteme dön.";
+
+  if (puan >= 80) yorum = "Güzel gün. Böyle devam.";
+  else if (puan >= 60) yorum = "Orta gün. Zincir kırılmadı ama yarın daha net olacağız.";
+
+  document.getElementById("raporSonuc").textContent =
+`Bugünkü Puan: ${puan}/100
+
+Yorum:
+${yorum}
+
+Yarın için net görev:
+- Protein hedefini öne al
+- Suyu gün içine yay
+- 20 dakika yürüyüş ekle
+- Antrenman kaçarsa minimum görev yap`;
+}
+
 function getCoachOSProfileForGemini() {
   return {
-    age: document.getElementById("yas")?.value || "",
-    height: document.getElementById("boy")?.value || "",
-    weight: document.getElementById("kilo")?.value || "",
-    sex: document.getElementById("cinsiyet")?.value || "",
-    goal: document.getElementById("hedef")?.value || "",
-    tempo: document.getElementById("tempo")?.value || "",
-    trainingDays: document.getElementById("sporGun")?.value || ""
+    age: text("yas"),
+    height: text("boy"),
+    weight: text("kilo"),
+    sex: text("cinsiyet"),
+    goal: text("hedef"),
+    tempo: text("tempo"),
+    trainingDays: text("sporGun")
   };
 }
 
@@ -63,21 +825,20 @@ function getCoachOSTargetsForGemini() {
 }
 
 async function sendCommandToGemini(command) {
-  const resultEl = document.getElementById("voiceResult");
-  const inputEl = document.getElementById("voiceText");
-
-  if (!resultEl || !inputEl) return;
+  const out = document.getElementById("voiceResult");
+  const input = document.getElementById("voiceText");
 
   if (!command || !command.trim()) {
-    resultEl.textContent = "Komut boş. Örnek: Yemek analizi aç.";
+    out.textContent = "Komut boş. Örnek: Yemek analizi aç.";
     return;
   }
 
-  inputEl.value = command;
-  resultEl.textContent = "Gemini komutu yorumluyor...";
+  input.value = command;
+
+  out.textContent = "Gemini komutu yorumluyor...";
 
   try {
-    const response = await fetch("/api/gemini-command", {
+    const r = await fetch("/api/gemini-command", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -89,102 +850,85 @@ async function sendCommandToGemini(command) {
       })
     });
 
-    const data = await response.json();
+    const data = await r.json();
 
-    if (!response.ok) {
-      resultEl.textContent = "Hata: " + (data.error || "Gemini komutu çalışmadı.");
+    if (!r.ok) {
+      out.textContent = "Hata: " + (data.error || "Gemini komutu çalışmadı.");
       return;
     }
 
-    resultEl.textContent = data.message || "Komut alındı.";
-
-    if (data.action === "open_page" && data.page) {
-      showPage(data.page);
-      return;
-    }
+    out.textContent = data.message || "Komut alındı.";
 
     if (data.action === "motivate") {
-      showPage("motivasyon");
-      const moodBox = document.getElementById("modText");
-      if (moodBox) moodBox.value = command;
+      goPage("motivasyon");
+      document.getElementById("modText").value = command;
       motivasyonVer();
       return;
     }
 
     if (data.action === "create_workout") {
-      showPage("antrenman");
+      goPage("antrenman");
       antrenmanOlustur();
       return;
     }
 
     if (data.action === "show_memory") {
-      showPage("hafiza");
+      goPage("hafiza");
       hafizaGoster();
       return;
     }
 
     if (data.action === "show_report") {
-      showPage("rapor");
+      goPage("rapor");
       return;
     }
 
     if (data.page) {
-      showPage(data.page);
+      goPage(data.page);
       return;
     }
 
-  } catch (error) {
-    resultEl.textContent = "Komut sırasında hata oluştu: " + error.message;
+  } catch (e) {
+    out.textContent = "Komut hatası: " + e.message;
   }
 }
 
 function sendTypedCommand() {
-  const command = document.getElementById("voiceText")?.value || "";
-  sendCommandToGemini(command);
+  sendCommandToGemini(text("voiceText"));
 }
 
 function startVoiceCommand() {
-  const resultEl = document.getElementById("voiceResult");
+  const out = document.getElementById("voiceResult");
 
-  const SpeechRecognition =
-    window.SpeechRecognition || window.webkitSpeechRecognition;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-  if (!SpeechRecognition) {
-    resultEl.textContent =
-      "Bu tarayıcı ses tanımayı desteklemiyor. Komutu yazı olarak gir.";
+  if (!SR) {
+    out.textContent = "Bu tarayıcı ses tanımayı desteklemiyor. Komutu yazı olarak gir.";
     return;
   }
 
-  const recognition = new SpeechRecognition();
-  recognition.lang = "tr-TR";
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 1;
+  const rec = new SR();
 
-  resultEl.textContent = "Dinliyorum...";
+  rec.lang = "tr-TR";
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
 
-  recognition.onresult = function(event) {
-    const command = event.results[0][0].transcript;
-    sendCommandToGemini(command);
+  out.textContent = "Dinliyorum...";
+
+  rec.onresult = e => {
+    sendCommandToGemini(e.results[0][0].transcript);
   };
 
-  recognition.onerror = function(event) {
-    resultEl.textContent =
-      "Ses algılanamadı. Hata: " + event.error + ". Komutu yazı olarak da girebilirsin.";
+  rec.onerror = e => {
+    out.textContent = "Ses algılanamadı: " + e.error + ". Yazı olarak da girebilirsin.";
   };
 
-  recognition.start();
+  rec.start();
 }
 
-'''
+panelGuncelle();
+</script>
 
-# Insert JS before panelGuncelle(); once
-if "function getCoachOSProfileForGemini" not in html:
-    html = html.replace("panelGuncelle();", voice_js + "\npanelGuncelle();", 1)
-
-out = Path("/mnt/data/coachos_final_index_voice_memory.html")
-out.write_text(html, encoding="utf-8")
-
-print("Final index hazır:")
-print(out)
-print("Boyut:", out.stat().st_size)
+</body>
+</html>
 
