@@ -1,29 +1,44 @@
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({ error: "Sadece POST isteği kabul edilir." });
   }
 
   try {
-    const { image, mode } = req.body;
+    const { image, mode, note } = req.body;
 
     if (!image || !mode) {
-      return res.status(400).json({ error: "image ve mode gerekli" });
+      return res.status(400).json({
+        error: "Fotoğraf ve analiz tipi gerekli."
+      });
     }
 
     const apiKey = process.env.OPENAI_API_KEY;
+
     if (!apiKey) {
-      return res.status(500).json({ error: "OPENAI_API_KEY tanımlı değil" });
+      return res.status(500).json({
+        error: "OPENAI_API_KEY Vercel Environment Variables içine eklenmemiş."
+      });
     }
 
     let prompt = "";
 
     if (mode === "meal") {
       prompt = `
-Bu bir yemek fotoğrafı analizi görevidir.
-Cevabı Türkçe ver.
-Kesin iddia kurma, tahmini aralık kullan.
+Sen CoachOS yemek görsel analiz motorusun.
 
-Şu formatı kullan:
+Görev:
+Kullanıcının yüklediği yemek fotoğrafını fitness/beslenme açısından analiz et.
+Kullanıcı notu: ${note || "Yok"}
+
+Kurallar:
+- Türkçe cevap ver.
+- Kesin değer verme, tahmini aralık ver.
+- Gramaj görünmüyorsa bunu belirt.
+- Tıbbi tavsiye verme.
+- Kullanıcıyı korkutma.
+- Kısa, net ve uygulanabilir cevap ver.
+
+Cevap formatı:
 
 Yemek Analizi:
 
@@ -37,25 +52,37 @@ Vitamin/mineral kalitesi:
 Diyet uyumu: /10
 
 Yorum:
-Kısa ama net yorum yap.
+Kısa ve net yorum yap.
 
 Günün kalan önerisi:
 - Protein için öneri
 - Karbonhidrat/yağ dengeleme önerisi
 - Su önerisi
 
+Koç notu:
+Disiplinli ama motive edici kısa kapanış yap.
+
 Güvenlik notu:
 Bu analiz fotoğrafa göre tahminidir; kesin değer için gramaj gerekir.
 `;
     } else if (mode === "body") {
       prompt = `
-Bu bir fitness odaklı görsel vücut analizi görevidir.
-Cevabı Türkçe ver.
-Tıbbi teşhis koyma.
-Kesin yağ oranı iddiasında bulunma.
-Fotoğrafa göre tahmini değerlendirme yap.
+Sen CoachOS görsel vücut analiz motorusun.
 
-Şu formatı kullan:
+Görev:
+Kullanıcının yüklediği vücut fotoğrafını fitness hedefleri açısından analiz et.
+Kullanıcı notu: ${note || "Yok"}
+
+Kurallar:
+- Türkçe cevap ver.
+- Tıbbi teşhis koyma.
+- Kesin yağ oranı söyleme, tahmini aralık ver.
+- Kişinin kimliğini, yaşını veya hassas özelliklerini tahmin etme.
+- Görsele göre fitness odaklı değerlendirme yap.
+- Kırıcı, aşağılayıcı veya utandırıcı dil kullanma.
+- Hedef: yağ kaybı, kas koruma, postür ve antrenman stratejisi.
+
+Cevap formatı:
 
 Görsel Vücut Analizi:
 
@@ -80,10 +107,12 @@ Güvenlik notu:
 Bu analiz görsele göre tahminidir; tıbbi değerlendirme değildir.
 `;
     } else {
-      return res.status(400).json({ error: "Geçersiz mode" });
+      return res.status(400).json({
+        error: "Geçersiz analiz tipi. mode 'meal' veya 'body' olmalı."
+      });
     }
 
-    const response = await fetch("https://api.openai.com/v1/responses", {
+    const openaiResponse = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -95,32 +124,39 @@ Bu analiz görsele göre tahminidir; tıbbi değerlendirme değildir.
           {
             role: "user",
             content: [
-              { type: "input_text", text: prompt },
-              { type: "input_image", image_url: image }
+              {
+                type: "input_text",
+                text: prompt
+              },
+              {
+                type: "input_image",
+                image_url: image
+              }
             ]
           }
         ]
       })
     });
 
-    const data = await response.json();
+    const data = await openaiResponse.json();
 
-    if (!response.ok) {
+    if (!openaiResponse.ok) {
       return res.status(500).json({
-        error: "OpenAI API hatası",
+        error: "OpenAI API hatası.",
         details: data
       });
     }
 
-    const output =
+    const result =
       data.output_text ||
+      data.output?.[0]?.content?.[0]?.text ||
       "Analiz sonucu alınamadı.";
 
-    return res.status(200).json({ result: output });
+    return res.status(200).json({ result });
 
   } catch (error) {
     return res.status(500).json({
-      error: "Sunucu hatası",
+      error: "Sunucu hatası.",
       details: error.message
     });
   }
