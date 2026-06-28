@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CoachOS</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #080b12;
+      color: white;
+    }
+    header {
+      padding: 22px;
+      background: linear-gradient(135deg, #22c55e, #38bdf8);
+      color: #06131e;
+      font-weight: bold;
+      font-size: 26px;
+    }
+    nav {
+      display: flex;
+      overflow-x: auto;
+      gap: 8px;
+      padding: 12px;
+      background: #0f172a;
+    }
+    nav button {
+      border: 0;
+      padding: 12px 15px;
+      border-radius: 12px;
+      background: #1e293b;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    nav button.active {
+      background: #22c55e;
+      color: #06131e;
+    }
+    section {
+      display: none;
+      padding: 18px;
+    }
+    section.active {
+      display: block;
+    }
+    .card {
+      background: #111827;
+      border: 1px solid #253044;
+      border-radius: 18px;
+      padding: 18px;
+      margin-bottom: 15px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 13px;
+      margin: 8px 0 14px;
+      border-radius: 12px;
+      border: 1px solid #334155;
+      background: #020617;
+      color: white;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    textarea {
+      min-height: 90px;
+    }
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: 0;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #22c55e, #38bdf8);
+      color: #06131e;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .result {
+      background: #020617;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 15px;
+      white-space: pre-wrap;
+      line-height: 1.5;
+      color: #dbeafe;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .stat {
+      background: #111827;
+      border: 1px solid #253044;
+      border-radius: 16px;
+      padding: 15px;
+    }
+    .stat b {
+      font-size: 24px;
+      display: block;
+      margin-top: 5px;
+      color: #22c55e;
+    }
+  </style>
+</head>
+<body>
+
+<header>CoachOS - AI Fitness Koçu</header>
+
+<nav>
+  <button class="active" onclick="showPage('panel', this)">Panel</button>
+  <button onclick="showPage('profil', this)">Profil</button>
+  <button onclick="showPage('yemek', this)">Yemek</button>
+  <button onclick="showPage('vucut', this)">Vücut</button>
+  <button onclick="showPage('antrenman', this)">Antrenman</button>
+  <button onclick="showPage('motivasyon', this)">Motivasyon</button>
+  <button onclick="showPage('rapor', this)">Rapor</button>
+</nav>
+
+<section id="panel" class="active">
+  <div class="card">
+    <h2>Motivasyon biter, sistem devam eder.</h2>
+    <p>Profilini kur, CoachOS sana kalori, makro, antrenman ve günlük görev çıkarır.</p>
+  </div>
+
+  <div class="grid">
+    <div class="stat">Kalori <b id="pKalori">-</b></div>
+    <div class="stat">Protein <b id="pProtein">-</b></div>
+    <div class="stat">Su <b id="pSu">-</b></div>
+    <div class="stat">Adım <b id="pAdim">-</b></div>
+  </div>
+
+  <div class="card">
+    <h3>Bugünün Görevi</h3>
+    <div class="result" id="gorev">Önce profilini kur dostum.</div>
+  </div>
+</section>
+
+<section id="profil">
+  <div class="card">
+    <h2>Profil Kur</h2>
+
+    <label>Yaş</label>
+    <input id="yas" type="number" placeholder="18">
+
+    <label>Boy cm</label>
+    <input id="boy" type="number" placeholder="175">
+
+    <label>Kilo kg</label>
+    <input id="kilo" type="number" placeholder="95">
+
+    <label>Cinsiyet</label>
+    <select id="cinsiyet">
+      <option>Erkek</option>
+      <option>Kadın</option>
+    </select>
+
+    <label>Hedef</label>
+    <select id="hedef">
+      <option>Yağ yakımı + kas koruma</option>
+      <option>Fit</option>
+      <option>Atletik</option>
+      <option>Kaslı</option>
+      <option>Kilo alma / kas kazanma</option>
+    </select>
+
+    <label>Günlük tempo</label>
+    <select id="tempo">
+      <option>Az</option>
+      <option selected>Orta</option>
+      <option>Yoğun</option>
+      <option>Çok aktif</option>
+    </select>
+
+    <label>Haftada kaç gün spor?</label>
+    <input id="sporGun" type="number" placeholder="4">
+
+    <button class="btn" onclick="profilKaydet()">Profili Kaydet</button>
+  </div>
+
+  <div class="card">
+    <h3>Sonuç</h3>
+    <div class="result" id="profilSonuc">Bilgileri girip kaydet.</div>
+  </div>
+</section>
+
+<section id="yemek">
+  <div class="card">
+    <h2>Yemek Analizi</h2>
+    <textarea id="yemekText" placeholder="Örnek: 200 g tavuk, 150 g pilav, 1 kase yoğurt"></textarea>
+    <button class="btn" onclick="yemekAnaliz()">Yemeği Analiz Et</button>
+  </div>
+  <div class="card">
+    <div class="result" id="yemekSonuc">Yemek bilgisi gir.</div>
+  </div>
+</section>
+
+<section id="vucut">
+  <div class="card">
+    <h2>Vücut Analizi</h2>
+    <textarea id="vucutText" placeholder="Örnek: göbek-bel var, omuzlar iyi, göğüs zayıf, bacaklar güçlü..."></textarea>
+    <button class="btn" onclick="vucutAnaliz()">Analiz Et</button>
+  </div>
+  <div class="card">
+    <div class="result" id="vucutSonuc">Vücut notunu yaz.</div>
+  </div>
+</section>
+
+<section id="antrenman">
+  <div class="card">
+    <h2>Antrenman</h2>
+    <button class="btn" onclick="antrenmanOlustur()">Program Oluştur</button>
+  </div>
+  <div class="card">
+    <div class="result" id="antrenmanSonuc">Butona bas.</div>
+  </div>
+</section>
+
+<section id="motivasyon">
+  <div class="card">
+    <h2>Motivasyon + Disiplin</h2>
+    <textarea id="modText" placeholder="Bugün spora gitmek istemiyorum..."></textarea>
+    <button class="btn" onclick="motivasyonVer()">Koç Cevabı</button>
+  </div>
+  <div class="card">
+    <div class="result" id="motivasyonSonuc">Modunu yaz.</div>
+  </div>
+</section>
+
+<section id="rapor">
+  <div class="card">
+    <h2>Günlük Rapor</h2>
+
+    <label>Protein</label>
+    <select id="rProtein">
+      <option value="25">Tamam</option>
+      <option value="13">Kısmen</option>
+      <option value="0">Olmadı</option>
+    </select>
+
+    <label>Antrenman</label>
+    <select id="rAntrenman">
+      <option value="25">Yaptım</option>
+      <option value="13">Minimum görev</option>
+      <option value="0">Yapmadım</option>
+    </select>
+
+    <label>Kalori</label>
+    <select id="rKalori">
+      <option value="20">İyi</option>
+      <option value="10">Orta</option>
+      <option value="0">Dağıldı</option>
+    </select>
+
+    <label>Su</label>
+    <select id="rSu">
+      <option value="10">Tam</option>
+      <option value="5">Eksik</option>
+      <option value="0">Çok az</option>
+    </select>
+
+    <label>Adım</label>
+    <select id="rAdim">
+      <option value="10">Tam</option>
+      <option value="5">Eksik</option>
+      <option value="0">Çok az</option>
+    </select>
+
+    <label>Uyku</label>
+    <select id="rUyku">
+      <option value="10">İyi</option>
+      <option value="5">Orta</option>
+      <option value="0">Kötü</option>
+    </select>
+
+    <button class="btn" onclick="raporOlustur()">Rapor Oluştur</button>
+  </div>
+
+  <div class="card">
+    <div class="result" id="raporSonuc">Rapor burada çıkar.</div>
+  </div>
+</section>
+
+<script>
+function showPage(id, btn) {
+  document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+}
+
+function val(id, def = 0) {
+  const v = parseFloat(document.getElementById(id).value);
+  return isNaN(v) ? def : v;
+}
+
+function text(id) {
+  return document.getElementById(id).value.trim();
+}
+
+function hesapla() {
+  const yas = val("yas", 18);
+  const boy = val("boy", 175);
+  const kilo = val("kilo", 95);
+  const cinsiyet = text("cinsiyet").toLowerCase();
+  const hedef = text("hedef").toLowerCase();
+  const tempo = text("tempo").toLowerCase();
+
+  let bmr = cinsiyet.includes("erkek")
+    ? 10 * kilo + 6.25 * boy - 5 * yas + 5
+    : 10 * kilo + 6.25 * boy - 5 * yas - 161;
+
+  let carp = 1.45;
+  if (tempo.includes("az")) carp = 1.35;
+  if (tempo.includes("orta")) carp = 1.55;
+  if (tempo.includes("yoğun") || tempo.includes("çok")) carp = 1.7;
+
+  let kalori = Math.round(bmr * carp - 450);
+  if (hedef.includes("kilo alma")) kalori = Math.round(bmr * carp + 250);
+
+  kalori = Math.max(kalori, cinsiyet.includes("erkek") ? 1700 : 1400);
+
+  let protein = Math.round(kilo * 1.8);
+  let yag = Math.round(kilo * 0.8);
+  let karbonhidrat = Math.max(Math.round((kalori - protein * 4 - yag * 9) / 4), 80);
+  let su = Math.round(kilo * 0.035 * 10) / 10;
+  let adim = hedef.includes("yağ") || hedef.includes("fit") ? 9000 : 7500;
+
+  return { kalori, protein, yag, karbonhidrat, su, adim };
+}
+
+function profilKaydet() {
+  const h = hesapla();
+  localStorage.setItem("coachos", JSON.stringify(h));
+
+  document.getElementById("profilSonuc").textContent =
+`Profil kaydedildi.
+
+Günlük hedefler:
+Kalori: ${h.kalori} kcal
+Protein: ${h.protein} g
+Karbonhidrat: ${h.karbonhidrat} g
+Yağ: ${h.yag} g
+Su: ${h.su} litre
+Adım: ${h.adim}
+
+Koç yorumu:
+Hedefin yağ kaybıysa ana strateji yüksek protein, kontrollü kalori ve düzenli ağırlık antrenmanı.`;
+
+  panelGuncelle();
+}
+
+function panelGuncelle() {
+  const h = JSON.parse(localStorage.getItem("coachos") || "{}");
+  document.getElementById("pKalori").textContent = h.kalori || "-";
+  document.getElementById("pProtein").textContent = h.protein ? h.protein + "g" : "-";
+  document.getElementById("pSu").textContent = h.su ? h.su + "L" : "-";
+  document.getElementById("pAdim").textContent = h.adim || "-";
+  document.getElementById("gorev").textContent = h.kalori ?
+`Bugünün görevi:
+1) ${h.protein} g proteine yaklaş.
+2) ${h.su} litre suyu bitir.
+3) ${h.adim} adım hedefini tamamla.
+4) Antrenman günü ise minimum görev bile olsa zinciri kırma.` :
+"Önce profilini kur dostum.";
+}
+
+function yemekAnaliz() {
+  const y = text("yemekText").toLowerCase();
+  let protein = 20, karbonhidrat = 50, yag = 20;
+
+  if (y.includes("tavuk") || y.includes("et") || y.includes("ton") || y.includes("hindi")) protein += 25;
+  if (y.includes("pilav") || y.includes("makarna") || y.includes("ekmek") || y.includes("patates")) karbonhidrat += 35;
+  if (y.includes("kızart") || y.includes("yağ") || y.includes("sos")) yag += 15;
+
+  let kalori = protein * 4 + karbonhidrat * 4 + yag * 9;
+
+  document.getElementById("yemekSonuc").textContent =
+`Yemek Analizi:
+
+Tahmini kalori: ${kalori - 100}–${kalori + 150} kcal
+Protein: ${protein - 5}–${protein + 8} g
+Karbonhidrat: ${karbonhidrat - 10}–${karbonhidrat + 15} g
+Yağ: ${yag - 5}–${yag + 10} g
+
+Diyet uyumu: ${protein >= 35 ? "8/10" : "6/10"}
+
+Yorum:
+Bu tahmini analizdir. Gramaj netleşirse değerler daha doğru çıkar.
+
+Günün kalan önerisi:
+Protein düşükse 150–200 g tavuk, yoğurt veya ton balığı ekle.`;
+}
+
+function vucutAnaliz() {
+  const not = text("vucutText");
+  const h = JSON.parse(localStorage.getItem("coachos") || "{}");
+
+  document.getElementById("vucutSonuc").textContent =
+`Görsel Vücut Analizi:
+
+Kullanıcı notu:
+${not || "Not girilmedi."}
+
+Tahmini strateji:
+- Kalori: ${h.kalori || "-"} kcal
+- Protein: ${h.protein || "-"} g
+- Su: ${h.su || "-"} litre
+- Adım: ${h.adim || "8000+"}
+
+90 Günlük Hedef:
+Yağ kaybı + kas koruma. Ağırlık antrenmanı, yüksek protein ve düzenli takip.
+
+Güvenlik notu:
+Bu tıbbi analiz değildir. Görsele/profil bilgisine göre fitness değerlendirmesidir.`;
+}
+
+function antrenmanOlustur() {
+  const gun = val("sporGun", 4);
+
+  document.getElementById("antrenmanSonuc").textContent =
+gun <= 3 ?
+`Full Body Program:
+
+1. Squat / Leg Press — 3x8-12
+2. Dumbbell Bench Press — 3x8-12
+3. Lat Pulldown — 3x8-12
+4. Shoulder Press — 3x8-10
+5. Cable Row — 3x10-12
+6. Plank — 3x30-45 sn
+
+Kardiyo:
+15-25 dk yürüyüş.
+
+Bugün amaç ego değil, kaliteli tekrar.` :
+`Upper / Lower Program:
+
+Üst Gün:
+- Bench Press 4x6-10
+- Lat Pulldown 4x8-12
+- Shoulder Press 3x8-10
+- Cable Row 3x10-12
+- Lateral Raise 3x12-15
+- Kol çalışması 2-3 set
+
+Alt Gün:
+- Squat / Leg Press 4x8-12
+- Romanian Deadlift 3x8-10
+- Leg Curl 3x10-12
+- Calf Raise 4x12-15
+- Plank 3 set
+
+Yorgun gün:
+3 ana hareket + 15 dk yürüyüş. Zincir kırılmayacak.`;
+}
+
+function motivasyonVer() {
+  const mod = text("modText");
+
+  document.getElementById("motivasyonSonuc").textContent =
+`Modunu kabul ediyorum:
+"${mod || "Bugün spora gitmek istemiyorum."}"
+
+Ama sistem şöyle çalışıyor:
+Motivasyon yoksa minimum disiplin var.
+
+Bugünkü minimum görev:
+- 5 dakika ısın
+- 3 hareket yap
+- 10 dakika yürü
+
+Tam performans beklemiyorum.
+Sadece zinciri kırma.
+
+Bugün kazanan kişi canı istediği için değil, söz verdiği için yapan kişidir.`;
+}
+
+function raporOlustur() {
+  const puan =
+    Number(text("rProtein")) +
+    Number(text("rAntrenman")) +
+    Number(text("rKalori")) +
+    Number(text("rSu")) +
+    Number(text("rAdim")) +
+    Number(text("rUyku"));
+
+  let yorum = "Dağıldı ama bitti değil. Yarın minimum görevle sisteme dön.";
+  if (puan >= 80) yorum = "Güzel gün. Böyle devam.";
+  else if (puan >= 60) yorum = "Orta gün. Zincir kırılmadı ama yarın daha net olacağız.";
+
+  document.getElementById("raporSonuc").textContent =
+`Bugünkü Puan: ${puan}/100
+
+Yorum:
+${yorum}
+
+Yarın için net görev:
+- Protein hedefini öne al
+- Suyu gün içine yay
+- 20 dakika yürüyüş ekle
+- Antrenman kaçarsa minimum görev yap
+
+Mükemmel gün aramıyoruz. Sistemi bırakmayan kazanır.`;
+}
+
+panelGuncelle();
+</script>
+
+</body>
+</html>
