@@ -1,14 +1,36 @@
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: "10mb"
+    }
+  }
+};
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Sadece POST isteği kabul edilir." });
+    return res.status(405).json({
+      error: "Sadece POST isteği kabul edilir."
+    });
   }
 
   try {
-    const { image, mode, note } = req.body;
+    const { image, mode, note } = req.body || {};
 
-    if (!image || !mode) {
+    if (!image || typeof image !== "string") {
       return res.status(400).json({
-        error: "Fotoğraf ve analiz tipi gerekli."
+        error: "Fotoğraf verisi eksik veya hatalı."
+      });
+    }
+
+    if (!image.startsWith("data:image/")) {
+      return res.status(400).json({
+        error: "Fotoğraf formatı hatalı. Görsel data URL olarak gönderilmeli."
+      });
+    }
+
+    if (!mode || !["meal", "body"].includes(mode)) {
+      return res.status(400).json({
+        error: "Analiz tipi hatalı. mode 'meal' veya 'body' olmalı."
       });
     }
 
@@ -27,21 +49,24 @@ export default async function handler(req, res) {
 Sen CoachOS yemek görsel analiz motorusun.
 
 Görev:
-Kullanıcının yüklediği yemek fotoğrafını fitness/beslenme açısından analiz et.
+Kullanıcının yüklediği yemek fotoğrafını fitness ve beslenme açısından analiz et.
 Kullanıcı notu: ${note || "Yok"}
 
 Kurallar:
 - Türkçe cevap ver.
 - Kesin değer verme, tahmini aralık ver.
-- Gramaj görünmüyorsa bunu belirt.
+- Gramaj net görünmüyorsa bunu belirt.
 - Tıbbi tavsiye verme.
 - Kullanıcıyı korkutma.
 - Kısa, net ve uygulanabilir cevap ver.
+- Kalori ve makroları tahmini aralıkla yaz.
+- Eğer fotoğrafta birden fazla yemek varsa ayrı ayrı belirt.
 
 Cevap formatı:
 
 Yemek Analizi:
 
+Görünen yemekler:
 Tahmini kalori:
 Protein:
 Karbonhidrat:
@@ -65,7 +90,9 @@ Disiplinli ama motive edici kısa kapanış yap.
 Güvenlik notu:
 Bu analiz fotoğrafa göre tahminidir; kesin değer için gramaj gerekir.
 `;
-    } else if (mode === "body") {
+    }
+
+    if (mode === "body") {
       prompt = `
 Sen CoachOS görsel vücut analiz motorusun.
 
@@ -106,10 +133,6 @@ Kısa, motive edici ama disiplinli kapanış yap.
 Güvenlik notu:
 Bu analiz görsele göre tahminidir; tıbbi değerlendirme değildir.
 `;
-    } else {
-      return res.status(400).json({
-        error: "Geçersiz analiz tipi. mode 'meal' veya 'body' olmalı."
-      });
     }
 
     const openaiResponse = await fetch("https://api.openai.com/v1/responses", {
@@ -120,6 +143,7 @@ Bu analiz görsele göre tahminidir; tıbbi değerlendirme değildir.
       },
       body: JSON.stringify({
         model: "gpt-4.1-mini",
+        max_output_tokens: 900,
         input: [
           {
             role: "user",
@@ -152,7 +176,9 @@ Bu analiz görsele göre tahminidir; tıbbi değerlendirme değildir.
       data.output?.[0]?.content?.[0]?.text ||
       "Analiz sonucu alınamadı.";
 
-    return res.status(200).json({ result });
+    return res.status(200).json({
+      result
+    });
 
   } catch (error) {
     return res.status(500).json({
