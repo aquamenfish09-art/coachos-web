@@ -6,46 +6,25 @@ export const config = {
   }
 };
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({
-      error: "Sadece POST isteği kabul edilir."
-    });
+function parseDataUrl(dataUrl) {
+  if (!dataUrl || typeof dataUrl !== "string") {
+    return null;
   }
 
-  try {
-    const { image, mode, note } = req.body || {};
+  const match = dataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
 
-    if (!image || typeof image !== "string") {
-      return res.status(400).json({
-        error: "Fotoğraf verisi eksik veya hatalı."
-      });
-    }
+  if (!match) {
+    return null;
+  }
 
-    if (!image.startsWith("data:image/")) {
-      return res.status(400).json({
-        error: "Fotoğraf formatı hatalı. Görsel data URL olarak gönderilmeli."
-      });
-    }
+  return {
+    mimeType: match[1],
+    base64Data: match[2]
+  };
+}
 
-    if (!mode || !["meal", "body"].includes(mode)) {
-      return res.status(400).json({
-        error: "Analiz tipi hatalı. mode 'meal' veya 'body' olmalı."
-      });
-    }
-
-    const apiKey = process.env.OPENAI_API_KEY;
-
-    if (!apiKey) {
-      return res.status(500).json({
-        error: "OPENAI_API_KEY Vercel Environment Variables içine eklenmemiş."
-      });
-    }
-
-    let prompt = "";
-
-    if (mode === "meal") {
-      prompt = `
+function getMealPrompt(note) {
+  return `
 Sen CoachOS yemek görsel analiz motorusun.
 
 Görev:
@@ -61,6 +40,8 @@ Kurallar:
 - Kısa, net ve uygulanabilir cevap ver.
 - Kalori ve makroları tahmini aralıkla yaz.
 - Eğer fotoğrafta birden fazla yemek varsa ayrı ayrı belirt.
+- Yemekteki su oranını tahmini yaz.
+- Vitamin/mineral kalitesini pratik dille açıkla.
 
 Cevap formatı:
 
@@ -90,10 +71,10 @@ Disiplinli ama motive edici kısa kapanış yap.
 Güvenlik notu:
 Bu analiz fotoğrafa göre tahminidir; kesin değer için gramaj gerekir.
 `;
-    }
+}
 
-    if (mode === "body") {
-      prompt = `
+function getBodyPrompt(note) {
+  return `
 Sen CoachOS görsel vücut analiz motorusun.
 
 Görev:
@@ -108,6 +89,7 @@ Kurallar:
 - Görsele göre fitness odaklı değerlendirme yap.
 - Kırıcı, aşağılayıcı veya utandırıcı dil kullanma.
 - Hedef: yağ kaybı, kas koruma, postür ve antrenman stratejisi.
+- Cevap motive edici ama gerçekçi olsun.
 
 Cevap formatı:
 
@@ -133,47 +115,96 @@ Kısa, motive edici ama disiplinli kapanış yap.
 Güvenlik notu:
 Bu analiz görsele göre tahminidir; tıbbi değerlendirme değildir.
 `;
+}
+
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({
+      error: "Sadece POST isteği kabul edilir."
+    });
+  }
+
+  try {
+    const { image, mode, note } = req.body || {};
+
+    if (!image || typeof image !== "string") {
+      return res.status(400).json({
+        error: "Fotoğraf verisi eksik veya hatalı."
+      });
     }
 
-    const openaiResponse = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: "gpt-4.1-mini",
-        max_output_tokens: 900,
-        input: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "input_text",
-                text: prompt
-              },
-              {
-                type: "input_image",
-                image_url: image
-              }
-            ]
-          }
-        ]
-      })
-    });
+    if (!mode || !["meal", "body"].includes(mode)) {
+      return res.status(400).json({
+        error: "Analiz tipi hatalı. mode 'meal' veya 'body' olmalı."
+      });
+    }
 
-    const data = await openaiResponse.json();
+    const parsedImage = parseDataUrl(image);
 
-    if (!openaiResponse.ok) {
+    if (!parsedImage) {
+      return res.status(400).json({
+        error: "Fotoğraf formatı hatalı. Görsel data:image/jpeg;base64 formatında gönderilmeli."
+      });
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    if (!apiKey) {
       return res.status(500).json({
-        error: "OpenAI API hatası.",
+        error: "GEMINI_API_KEY Vercel Environment Variables içine eklenmemiş."
+      });
+    }
+
+    const prompt = mode === "meal"
+      ? getMealPrompt(note)
+      : getBodyPrompt(note);
+
+    const geminiResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: prompt
+                },
+                {
+                  inline_data: {
+                    mime_type: parsedImage.mimeType,
+                    data: parsedImage.base64Data
+                  }
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.35,
+            maxOutputTokens: 1000
+          }
+        })
+      }
+    );
+
+    const data = await geminiResponse.json();
+
+    if (!geminiResponse.ok) {
+      return res.status(500).json({
+        error: "Gemini API hatası.",
         details: data
       });
     }
 
     const result =
-      data.output_text ||
-      data.output?.[0]?.content?.[0]?.text ||
+      data.candidates?.[0]?.content?.parts
+        ?.map(part => part.text || "")
+        .join("")
+        .trim() ||
       "Analiz sonucu alınamadı.";
 
     return res.status(200).json({
