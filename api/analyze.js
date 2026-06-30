@@ -25,51 +25,77 @@ function parseDataUrl(dataUrl) {
 
 function getMealPrompt(note) {
   return `
-Sen CoachOS yemek görsel analiz motorusun.
+Sen CoachOS'un profesyonel yemek görsel analiz motorusun.
 
-Görev:
-Kullanıcının yüklediği yemek fotoğrafını fitness ve beslenme açısından analiz et.
-Kullanıcı notu: ${note || "Yok"}
+Kullanıcının yüklediği yemek fotoğrafını fitness, kilo verme, kas koruma ve günlük makro takibi açısından analiz edeceksin.
 
-Kurallar:
-- Türkçe cevap ver.
-- Kesin değer verme, tahmini aralık ver.
-- Gramaj net görünmüyorsa bunu belirt.
-- Tıbbi tavsiye verme.
-- Kullanıcıyı korkutma.
-- Kısa, net ve uygulanabilir cevap ver.
-- Kalori ve makroları tahmini aralıkla yaz.
-- Eğer fotoğrafta birden fazla yemek varsa ayrı ayrı belirt.
-- Yemekteki su oranını tahmini yaz.
-- Vitamin/mineral kalitesini pratik dille açıkla.
+Kullanıcı notu:
+${note || "Yok"}
 
-Cevap formatı:
+ÇOK ÖNEMLİ KURALLAR:
+- Sadece yemek isimlerini yazıp bırakma.
+- Her analizde MUTLAKA kalori, protein, karbonhidrat, yağ, lif ve su oranı tahmini ver.
+- Gramaj net görünmüyorsa yine de porsiyon görüntüsüne göre tahmini aralık ver.
+- Emin değilsen "tahmini" de ama alanı boş bırakma.
+- Kesin değer verme; aralık kullan. Örnek: 650-850 kcal.
+- Tıbbi teşhis veya tedavi tavsiyesi verme.
+- Cevabı Türkçe ver.
+- Kısa ama dolu cevap ver.
+- Fotoğrafta birden fazla yemek varsa ayrı ayrı belirt.
+- En sonda toplam tahmini değerleri ver.
+
+Cevap formatını AYNEN böyle kullan:
 
 Yemek Analizi:
 
-Görünen yemekler:
-Tahmini kalori:
-Protein:
-Karbonhidrat:
-Yağ:
-Lif:
-Su oranı:
-Vitamin/mineral kalitesi:
-Diyet uyumu: /10
+1) Görünen yemekler:
+- Yemek 1:
+- Yemek 2:
+- Yemek 3:
 
-Yorum:
+2) Porsiyon tahmini:
+- Ana yemek:
+- Yan ürünler:
+- Tatlı / içecek varsa:
+
+3) Tahmini toplam kalori:
+- Toplam: ... kcal arası
+
+4) Tahmini makrolar:
+- Protein: ... g arası
+- Karbonhidrat: ... g arası
+- Yağ: ... g arası
+- Lif: ... g arası
+
+5) Tahmini su oranı:
+- Yemekteki su oranı: ... /10
+- Açıklama:
+
+6) Vitamin / mineral kalitesi:
+- Kalite: ... /10
+- Güçlü taraf:
+- Zayıf taraf:
+
+7) Diyet uyumu:
+- Yağ yakımı için: ... /10
+- Kas koruma için: ... /10
+- Dikkat edilmesi gereken:
+
+8) Koç yorumu:
 Kısa ve net yorum yap.
 
-Günün kalan önerisi:
-- Protein için öneri
-- Karbonhidrat/yağ dengeleme önerisi
-- Su önerisi
+9) Günün kalan önerisi:
+- Protein:
+- Karbonhidrat:
+- Yağ:
+- Su:
+- Sonraki öğün önerisi:
 
-Koç notu:
-Disiplinli ama motive edici kısa kapanış yap.
+10) Güvenlik notu:
+Bu analiz fotoğrafa göre tahminidir. Kesin değer için gramaj gerekir.
 
-Güvenlik notu:
-Bu analiz fotoğrafa göre tahminidir; kesin değer için gramaj gerekir.
+Örnek yaklaşım:
+Fotoğrafta mantı, çorba ve tatlı görünüyorsa sadece "mantı, çorba, tatlı" yazma. Mantının yoğurt/sos kaynaklı yağ ve karbonhidratını, çorbanın su oranını, tatlının şeker/karbonhidrat etkisini mutlaka değerlendir.
 `;
 }
 
@@ -77,9 +103,9 @@ function getBodyPrompt(note) {
   return `
 Sen CoachOS görsel vücut analiz motorusun.
 
-Görev:
 Kullanıcının yüklediği vücut fotoğrafını fitness hedefleri açısından analiz et.
-Kullanıcı notu: ${note || "Yok"}
+Kullanıcı notu:
+${note || "Yok"}
 
 Kurallar:
 - Türkçe cevap ver.
@@ -95,24 +121,35 @@ Cevap formatı:
 
 Görsel Vücut Analizi:
 
-Tahmini yağ oranı:
-Kas kütlesi görünümü:
-Güçlü bölgeler:
-Gelişmesi gereken bölgeler:
-Postür/duruş:
-Hedefe göre yorum:
+1) Tahmini yağ oranı:
+- ... arası
 
-90 Günlük Strateji:
+2) Kas kütlesi görünümü:
+-
+
+3) Güçlü bölgeler:
+-
+
+4) Gelişmesi gereken bölgeler:
+-
+
+5) Postür / duruş:
+-
+
+6) Hedefe göre yorum:
+-
+
+7) 90 Günlük Strateji:
 - Kalori:
 - Protein:
 - Antrenman:
 - Kardiyo/adım:
 - Uyku/su:
 
-Net koç yorumu:
+8) Net koç yorumu:
 Kısa, motive edici ama disiplinli kapanış yap.
 
-Güvenlik notu:
+9) Güvenlik notu:
 Bu analiz görsele göre tahminidir; tıbbi değerlendirme değildir.
 `;
 }
@@ -184,8 +221,8 @@ export default async function handler(req, res) {
             }
           ],
           generationConfig: {
-            temperature: 0.35,
-            maxOutputTokens: 1000
+            temperature: 0.15,
+            maxOutputTokens: 1800
           }
         })
       }
