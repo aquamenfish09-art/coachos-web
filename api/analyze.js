@@ -7,15 +7,11 @@ export const config = {
 };
 
 function parseDataUrl(dataUrl) {
-  if (!dataUrl || typeof dataUrl !== "string") {
-    return null;
-  }
+  if (!dataUrl || typeof dataUrl !== "string") return null;
 
   const match = dataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
 
-  if (!match) {
-    return null;
-  }
+  if (!match) return null;
 
   return {
     mimeType: match[1],
@@ -23,134 +19,279 @@ function parseDataUrl(dataUrl) {
   };
 }
 
-function getMealPrompt(note) {
-  return `
-Sen CoachOS'un profesyonel yemek görsel analiz motorusun.
+function safe(value, fallback = "Fotoğrafa göre net değil, tahmini değerlendirme gerekir.") {
+  if (value === null || value === undefined) return fallback;
+  if (typeof value === "string" && !value.trim()) return fallback;
+  return value;
+}
 
-Kullanıcının yüklediği yemek fotoğrafını fitness, kilo verme, kas koruma ve günlük makro takibi açısından analiz edeceksin.
+function list(items) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return "- Fotoğrafta görünen porsiyona göre tahmini değerlendirme gerekir.";
+  }
 
-Kullanıcı notu:
-${note || "Yok"}
+  return items.map(item => `- ${item}`).join("\n");
+}
 
-ÇOK ÖNEMLİ KURALLAR:
-- Sadece yemek isimlerini yazıp bırakma.
-- Her analizde MUTLAKA kalori, protein, karbonhidrat, yağ, lif ve su oranı tahmini ver.
-- Gramaj net görünmüyorsa yine de porsiyon görüntüsüne göre tahmini aralık ver.
-- Emin değilsen "tahmini" de ama alanı boş bırakma.
-- Kesin değer verme; aralık kullan. Örnek: 650-850 kcal.
-- Tıbbi teşhis veya tedavi tavsiyesi verme.
-- Cevabı Türkçe ver.
-- Kısa ama dolu cevap ver.
-- Fotoğrafta birden fazla yemek varsa ayrı ayrı belirt.
-- En sonda toplam tahmini değerleri ver.
+function numberRange(value, unit) {
+  if (!value) return `Tahmini aralık verilemedi ${unit ? "(" + unit + ")" : ""}`;
 
-Cevap formatını AYNEN böyle kullan:
+  if (typeof value === "string") return value;
+
+  if (typeof value === "object") {
+    const min = value.min ?? value.minimum ?? value.low;
+    const max = value.max ?? value.maximum ?? value.high;
+
+    if (min !== undefined && max !== undefined) {
+      return `${min}-${max}${unit ? " " + unit : ""}`;
+    }
+  }
+
+  return String(value);
+}
+
+function formatMealAnalysis(json) {
+  const foods = Array.isArray(json.foods) ? json.foods : [];
+  const macros = json.macros || {};
+  const portions = json.portions || {};
+  const water = json.water || {};
+  const vitamins = json.vitamins_minerals || {};
+  const diet = json.diet_score || {};
+  const remaining = json.remaining_day_advice || {};
+
+  return `CoachOS Nutrition Engine v3
 
 Yemek Analizi:
 
 1) Görünen yemekler:
-- Yemek 1:
-- Yemek 2:
-- Yemek 3:
+${list(foods)}
 
 2) Porsiyon tahmini:
-- Ana yemek:
-- Yan ürünler:
-- Tatlı / içecek varsa:
+- Ana yemek: ${safe(portions.main, "Fotoğrafa göre orta porsiyon görünüyor.")}
+- Yan ürünler: ${safe(portions.sides, "Yan ürün porsiyonu fotoğrafa göre sınırlı görünüyor.")}
+- Tatlı / içecek: ${safe(portions.dessert_drink, "Tatlı veya içecek varsa karbonhidrat/şeker etkisi hesaba katılmalı.")}
 
 3) Tahmini toplam kalori:
-- Toplam: ... kcal arası
+- Toplam: ${numberRange(json.total_calories_kcal, "kcal")}
 
 4) Tahmini makrolar:
-- Protein: ... g arası
-- Karbonhidrat: ... g arası
-- Yağ: ... g arası
-- Lif: ... g arası
+- Protein: ${numberRange(macros.protein_g, "g")}
+- Karbonhidrat: ${numberRange(macros.carbs_g, "g")}
+- Yağ: ${numberRange(macros.fat_g, "g")}
+- Lif: ${numberRange(macros.fiber_g, "g")}
 
 5) Tahmini su oranı:
-- Yemekteki su oranı: ... /10
-- Açıklama:
+- Yemekteki su oranı: ${safe(water.score_out_of_10, "?")}/10
+- Açıklama: ${safe(water.explanation)}
 
 6) Vitamin / mineral kalitesi:
-- Kalite: ... /10
-- Güçlü taraf:
-- Zayıf taraf:
+- Kalite: ${safe(vitamins.score_out_of_10, "?")}/10
+- Güçlü taraf: ${safe(vitamins.strong_side)}
+- Zayıf taraf: ${safe(vitamins.weak_side)}
 
 7) Diyet uyumu:
-- Yağ yakımı için: ... /10
-- Kas koruma için: ... /10
-- Dikkat edilmesi gereken:
+- Yağ yakımı için: ${safe(diet.fat_loss_out_of_10, "?")}/10
+- Kas koruma için: ${safe(diet.muscle_retention_out_of_10, "?")}/10
+- Dikkat edilmesi gereken: ${safe(diet.warning)}
 
 8) Koç yorumu:
-Kısa ve net yorum yap.
+${safe(json.coach_comment, "Bu öğün tek başına kötü değil; önemli olan günün toplam kalori ve protein dengesidir.")}
 
 9) Günün kalan önerisi:
-- Protein:
-- Karbonhidrat:
-- Yağ:
-- Su:
-- Sonraki öğün önerisi:
+- Protein: ${safe(remaining.protein)}
+- Karbonhidrat: ${safe(remaining.carbs)}
+- Yağ: ${safe(remaining.fat)}
+- Su: ${safe(remaining.water)}
+- Sonraki öğün önerisi: ${safe(remaining.next_meal)}
 
 10) Güvenlik notu:
-Bu analiz fotoğrafa göre tahminidir. Kesin değer için gramaj gerekir.
+Bu analiz fotoğrafa göre tahminidir. Kesin değer için gramaj gerekir.`;
+}
 
-Örnek yaklaşım:
-Fotoğrafta mantı, çorba ve tatlı görünüyorsa sadece "mantı, çorba, tatlı" yazma. Mantının yoğurt/sos kaynaklı yağ ve karbonhidratını, çorbanın su oranını, tatlının şeker/karbonhidrat etkisini mutlaka değerlendir.
+function formatBodyAnalysis(json) {
+  const strategy = json.strategy_90_days || {};
+
+  return `CoachOS Body Analysis Engine v3
+
+Görsel Vücut Analizi:
+
+1) Tahmini yağ oranı:
+- ${safe(json.estimated_body_fat_range, "Görsele göre tahmini aralık verilemedi.")}
+
+2) Kas kütlesi görünümü:
+- ${safe(json.muscle_mass_look)}
+
+3) Güçlü bölgeler:
+${list(json.strong_areas)}
+
+4) Gelişmesi gereken bölgeler:
+${list(json.needs_improvement)}
+
+5) Postür / duruş:
+- ${safe(json.posture)}
+
+6) Hedefe göre yorum:
+- ${safe(json.goal_comment)}
+
+7) 90 Günlük Strateji:
+- Kalori: ${safe(strategy.calories)}
+- Protein: ${safe(strategy.protein)}
+- Antrenman: ${safe(strategy.training)}
+- Kardiyo/adım: ${safe(strategy.cardio_steps)}
+- Uyku/su: ${safe(strategy.sleep_water)}
+
+8) Net koç yorumu:
+${safe(json.coach_comment, "Sistemli ilerlersen 90 günde görünür değişim alınır.")}
+
+9) Güvenlik notu:
+Bu analiz görsele göre tahminidir; tıbbi değerlendirme değildir.`;
+}
+
+function extractJson(text) {
+  if (!text || typeof text !== "string") return null;
+
+  try {
+    return JSON.parse(text);
+  } catch {}
+
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+
+  if (start === -1 || end === -1 || end <= start) return null;
+
+  try {
+    return JSON.parse(text.slice(start, end + 1));
+  } catch {
+    return null;
+  }
+}
+
+function getMealPrompt(note) {
+  return `
+Sen CoachOS'un yemek görsel analiz motorusun.
+
+Görev:
+Fotoğraftaki yemeği analiz et ve SADECE JSON döndür.
+
+Kullanıcı notu:
+${note || "Yok"}
+
+ZORUNLU:
+- Sadece yemek isimlerini yazıp bırakma.
+- Kalori, protein, karbonhidrat, yağ, lif, su oranı, vitamin/mineral kalitesi ve diyet uyumu alanlarını mutlaka doldur.
+- Emin değilsen tahmini aralık ver.
+- Alanları boş bırakma.
+- Değerler fotoğrafa göre tahmini olacak.
+- Yanıt sadece JSON olsun. Markdown yok, açıklama yok.
+
+Kalori tahmini yaparken:
+- Mantı / hamur işi yüksek karbonhidrat + orta protein + orta/yüksek yağ olabilir.
+- Çorba yüksek su oranına sahip olabilir.
+- Tatlı varsa karbonhidrat ve şeker etkisini hesaba kat.
+- Yoğurt/sos yağ ve protein değerini etkiler.
+- Porsiyon görünüyorsa orta/büyük/küçük diye tahmin et.
+
+JSON ŞEMASI:
+{
+  "foods": [
+    "Yemek adı ve kısa açıklama"
+  ],
+  "portions": {
+    "main": "Ana yemek porsiyon tahmini",
+    "sides": "Yan ürün porsiyon tahmini",
+    "dessert_drink": "Tatlı/içecek tahmini"
+  },
+  "total_calories_kcal": {
+    "min": 0,
+    "max": 0
+  },
+  "macros": {
+    "protein_g": {
+      "min": 0,
+      "max": 0
+    },
+    "carbs_g": {
+      "min": 0,
+      "max": 0
+    },
+    "fat_g": {
+      "min": 0,
+      "max": 0
+    },
+    "fiber_g": {
+      "min": 0,
+      "max": 0
+    }
+  },
+  "water": {
+    "score_out_of_10": 0,
+    "explanation": "Yemekteki su oranı yorumu"
+  },
+  "vitamins_minerals": {
+    "score_out_of_10": 0,
+    "strong_side": "Güçlü vitamin/mineral tarafı",
+    "weak_side": "Zayıf taraf"
+  },
+  "diet_score": {
+    "fat_loss_out_of_10": 0,
+    "muscle_retention_out_of_10": 0,
+    "warning": "Dikkat edilmesi gereken nokta"
+  },
+  "coach_comment": "Kısa net koç yorumu",
+  "remaining_day_advice": {
+    "protein": "Günün kalanında protein önerisi",
+    "carbs": "Karbonhidrat önerisi",
+    "fat": "Yağ önerisi",
+    "water": "Su önerisi",
+    "next_meal": "Sonraki öğün önerisi"
+  }
+}
+
+Sadece JSON döndür.
 `;
 }
 
 function getBodyPrompt(note) {
   return `
-Sen CoachOS görsel vücut analiz motorusun.
+Sen CoachOS'un görsel vücut analiz motorusun.
 
-Kullanıcının yüklediği vücut fotoğrafını fitness hedefleri açısından analiz et.
+Görev:
+Fotoğraftaki vücudu fitness hedefleri açısından analiz et ve SADECE JSON döndür.
+
 Kullanıcı notu:
 ${note || "Yok"}
 
 Kurallar:
-- Türkçe cevap ver.
 - Tıbbi teşhis koyma.
 - Kesin yağ oranı söyleme, tahmini aralık ver.
-- Kişinin kimliğini, yaşını veya hassas özelliklerini tahmin etme.
-- Görsele göre fitness odaklı değerlendirme yap.
-- Kırıcı, aşağılayıcı veya utandırıcı dil kullanma.
-- Hedef: yağ kaybı, kas koruma, postür ve antrenman stratejisi.
-- Cevap motive edici ama gerçekçi olsun.
+- Kimlik, yaş, etnik köken gibi hassas tahminler yapma.
+- Kırıcı dil kullanma.
+- Fitness, postür, yağ kaybı ve kas koruma odaklı değerlendir.
+- Yanıt sadece JSON olsun.
 
-Cevap formatı:
+JSON ŞEMASI:
+{
+  "estimated_body_fat_range": "Tahmini yağ oranı aralığı",
+  "muscle_mass_look": "Kas kütlesi görünümü",
+  "strong_areas": [
+    "Güçlü bölge"
+  ],
+  "needs_improvement": [
+    "Gelişmesi gereken bölge"
+  ],
+  "posture": "Postür/duruş yorumu",
+  "goal_comment": "Hedefe göre yorum",
+  "strategy_90_days": {
+    "calories": "Kalori stratejisi",
+    "protein": "Protein stratejisi",
+    "training": "Antrenman stratejisi",
+    "cardio_steps": "Kardiyo/adım stratejisi",
+    "sleep_water": "Uyku/su stratejisi"
+  },
+  "coach_comment": "Kısa net koç yorumu"
+}
 
-Görsel Vücut Analizi:
-
-1) Tahmini yağ oranı:
-- ... arası
-
-2) Kas kütlesi görünümü:
--
-
-3) Güçlü bölgeler:
--
-
-4) Gelişmesi gereken bölgeler:
--
-
-5) Postür / duruş:
--
-
-6) Hedefe göre yorum:
--
-
-7) 90 Günlük Strateji:
-- Kalori:
-- Protein:
-- Antrenman:
-- Kardiyo/adım:
-- Uyku/su:
-
-8) Net koç yorumu:
-Kısa, motive edici ama disiplinli kapanış yap.
-
-9) Güvenlik notu:
-Bu analiz görsele göre tahminidir; tıbbi değerlendirme değildir.
+Sadece JSON döndür.
 `;
 }
 
@@ -221,8 +362,9 @@ export default async function handler(req, res) {
             }
           ],
           generationConfig: {
-            temperature: 0.15,
-            maxOutputTokens: 1800
+            temperature: 0.05,
+            maxOutputTokens: 2200,
+            responseMimeType: "application/json"
           }
         })
       }
@@ -237,12 +379,25 @@ export default async function handler(req, res) {
       });
     }
 
-    const result =
+    const raw =
       data.candidates?.[0]?.content?.parts
         ?.map(part => part.text || "")
         .join("")
-        .trim() ||
-      "Analiz sonucu alınamadı.";
+        .trim() || "";
+
+    const parsed = extractJson(raw);
+
+    if (!parsed) {
+      return res.status(200).json({
+        result:
+          "CoachOS Nutrition Engine v3\n\nModel yapılandırılmış analiz döndüremedi.\n\nHam çıktı:\n" +
+          raw
+      });
+    }
+
+    const result = mode === "meal"
+      ? formatMealAnalysis(parsed)
+      : formatBodyAnalysis(parsed);
 
     return res.status(200).json({
       result
