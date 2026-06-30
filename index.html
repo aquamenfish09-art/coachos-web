@@ -129,6 +129,7 @@
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 10px;
+      margin-bottom: 14px;
     }
 
     .stat {
@@ -227,6 +228,10 @@
     <textarea id="voiceText" placeholder="Ses algılanmazsa komutu buraya yaz."></textarea>
 
     <button class="btn secondary" onclick="sendTypedCommand()">Komutu Gönder</button>
+
+    <button class="btn secondary" onclick="speakText(document.getElementById('voiceResult').textContent)">
+      🔊 Yanıtı Seslendir
+    </button>
 
     <div class="result" id="voiceResult">Komut bekleniyor.</div>
   </div>
@@ -573,13 +578,62 @@ function previewImage(event, id) {
   img.style.display = "block";
 }
 
-function fileToBase64(file) {
+function imageFileToJpegDataUrl(file, maxSize = 1200, quality = 0.82) {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
+    if (!file) {
+      reject(new Error("Fotoğraf seçilmedi."));
+      return;
+    }
 
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+
+    img.onload = function () {
+      let width = img.naturalWidth || img.width;
+      let height = img.naturalHeight || img.height;
+
+      if (!width || !height) {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Fotoğraf okunamadı."));
+        return;
+      }
+
+      if (width > height && width > maxSize) {
+        height = Math.round((height * maxSize) / width);
+        width = maxSize;
+      } else if (height >= width && height > maxSize) {
+        width = Math.round((width * maxSize) / height);
+        height = maxSize;
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(img, 0, 0, width, height);
+
+      const dataUrl = canvas.toDataURL("image/jpeg", quality);
+
+      URL.revokeObjectURL(objectUrl);
+
+      if (!dataUrl || !dataUrl.startsWith("data:image/jpeg;base64,")) {
+        reject(new Error("Fotoğraf JPEG formatına çevrilemedi."));
+        return;
+      }
+
+      resolve(dataUrl);
+    };
+
+    img.onerror = function () {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Fotoğraf yüklenemedi. JPG veya PNG olarak tekrar dene."));
+    };
+
+    img.src = objectUrl;
   });
 }
 
@@ -648,10 +702,12 @@ async function yemekAnaliz() {
     return;
   }
 
-  out.textContent = "Yemek fotoğrafı analiz ediliyor...";
+  out.textContent = "Fotoğraf hazırlanıyor...";
 
   try {
-    const image = await fileToBase64(file);
+    const image = await imageFileToJpegDataUrl(file);
+
+    out.textContent = "Yemek fotoğrafı analiz ediliyor...";
 
     const r = await fetch("/api/analyze", {
       method: "POST",
@@ -668,7 +724,10 @@ async function yemekAnaliz() {
     const data = await r.json();
 
     if (!r.ok) {
-      out.textContent = "Hata: " + (data.error || "Analiz çalışmadı.");
+      out.textContent =
+        "Hata: " +
+        (data.error || "Analiz çalışmadı.") +
+        (data.details ? "\n\nDetay: " + JSON.stringify(data.details, null, 2) : "");
       return;
     }
 
@@ -691,10 +750,12 @@ async function vucutAnaliz() {
     return;
   }
 
-  out.textContent = "Vücut fotoğrafı analiz ediliyor...";
+  out.textContent = "Fotoğraf hazırlanıyor...";
 
   try {
-    const image = await fileToBase64(file);
+    const image = await imageFileToJpegDataUrl(file);
+
+    out.textContent = "Vücut fotoğrafı analiz ediliyor...";
 
     const r = await fetch("/api/analyze", {
       method: "POST",
@@ -711,7 +772,10 @@ async function vucutAnaliz() {
     const data = await r.json();
 
     if (!r.ok) {
-      out.textContent = "Hata: " + (data.error || "Analiz çalışmadı.");
+      out.textContent =
+        "Hata: " +
+        (data.error || "Analiz çalışmadı.") +
+        (data.details ? "\n\nDetay: " + JSON.stringify(data.details, null, 2) : "");
       return;
     }
 
@@ -804,6 +868,31 @@ Yarın için net görev:
 - Antrenman kaçarsa minimum görev yap`;
 }
 
+function speakText(message) {
+  if (!message || !message.trim()) return;
+
+  if (!window.speechSynthesis) {
+    console.log("Bu tarayıcı sesli yanıtı desteklemiyor.");
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+
+  const cleanMessage = message
+    .replace(/[\n\r]+/g, ". ")
+    .replace(/\s+/g, " ")
+    .slice(0, 700);
+
+  const utterance = new SpeechSynthesisUtterance(cleanMessage);
+
+  utterance.lang = "tr-TR";
+  utterance.rate = 0.95;
+  utterance.pitch = 1;
+  utterance.volume = 1;
+
+  window.speechSynthesis.speak(utterance);
+}
+
 function getCoachOSProfileForGemini() {
   return {
     age: text("yas"),
@@ -854,21 +943,30 @@ async function sendCommandToGemini(command) {
 
     if (!r.ok) {
       out.textContent = "Hata: " + (data.error || "Gemini komutu çalışmadı.");
+      speakText(out.textContent);
       return;
     }
 
     out.textContent = data.message || "Komut alındı.";
+    speakText(data.message || "Komut alındı.");
 
     if (data.action === "motivate") {
       goPage("motivasyon");
       document.getElementById("modText").value = command;
       motivasyonVer();
+
+      const motivationText = document.getElementById("motivasyonSonuc").textContent;
+      speakText(motivationText);
+
       return;
     }
 
     if (data.action === "create_workout") {
       goPage("antrenman");
       antrenmanOlustur();
+
+      speakText("Antrenman programını oluşturdum. Bugün amaç mükemmel olmak değil, zinciri kırmamak.");
+
       return;
     }
 
@@ -890,6 +988,7 @@ async function sendCommandToGemini(command) {
 
   } catch (e) {
     out.textContent = "Komut hatası: " + e.message;
+    speakText(out.textContent);
   }
 }
 
@@ -899,31 +998,80 @@ function sendTypedCommand() {
 
 function startVoiceCommand() {
   const out = document.getElementById("voiceResult");
+  const input = document.getElementById("voiceText");
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 
   if (!SR) {
     out.textContent = "Bu tarayıcı ses tanımayı desteklemiyor. Komutu yazı olarak gir.";
+    if (input) input.focus();
     return;
   }
 
-  const rec = new SR();
+  try {
+    const rec = new SR();
 
-  rec.lang = "tr-TR";
-  rec.interimResults = false;
-  rec.maxAlternatives = 1;
+    rec.lang = "tr-TR";
+    rec.interimResults = false;
+    rec.continuous = false;
+    rec.maxAlternatives = 1;
 
-  out.textContent = "Dinliyorum...";
+    let started = false;
+    let receivedResult = false;
 
-  rec.onresult = e => {
-    sendCommandToGemini(e.results[0][0].transcript);
-  };
+    out.textContent = "Dinliyorum... Konuşmaya hemen başla.";
 
-  rec.onerror = e => {
-    out.textContent = "Ses algılanamadı: " + e.error + ". Yazı olarak da girebilirsin.";
-  };
+    rec.onstart = function () {
+      started = true;
+      out.textContent = "Dinliyorum... Şimdi konuş.";
+    };
 
-  rec.start();
+    rec.onresult = function (event) {
+      receivedResult = true;
+      const command = event.results[0][0].transcript;
+      sendCommandToGemini(command);
+    };
+
+    rec.onerror = function (event) {
+      if (event.error === "aborted") {
+        out.textContent =
+          "Mikrofon tarayıcı tarafından iptal edildi. Komutu yazıp 'Komutu Gönder' bas.";
+        if (input) input.focus();
+        return;
+      }
+
+      if (event.error === "not-allowed") {
+        out.textContent =
+          "Mikrofon izni verilmedi. Safari/Chrome ayarlarından mikrofon iznini aç.";
+        return;
+      }
+
+      if (event.error === "no-speech") {
+        out.textContent =
+          "Ses duyulmadı. Butona basınca hemen konuş veya komutu yazı olarak gönder.";
+        if (input) input.focus();
+        return;
+      }
+
+      out.textContent =
+        "Ses algılanamadı: " + event.error + ". Komutu yazı olarak da girebilirsin.";
+      if (input) input.focus();
+    };
+
+    rec.onend = function () {
+      if (started && !receivedResult) {
+        out.textContent =
+          "Ses tamamlanmadı. Komutu yazı olarak girebilir veya tekrar deneyebilirsin.";
+      }
+    };
+
+    rec.start();
+
+  } catch (error) {
+    out.textContent =
+      "Mikrofon başlatılamadı: " + error.message + ". Komutu yazı olarak gir.";
+    if (input) input.focus();
+  }
 }
 
 panelGuncelle();
@@ -931,4 +1079,3 @@ panelGuncelle();
 
 </body>
 </html>
-
