@@ -1,13 +1,17 @@
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Sadece POST isteği kabul edilir." });
+    return res.status(405).json({
+      error: "Sadece POST isteği kabul edilir."
+    });
   }
 
   try {
-    const { command, profile, targets } = req.body;
+    const { command, profile, targets } = req.body || {};
 
     if (!command) {
-      return res.status(400).json({ error: "Komut gerekli." });
+      return res.status(400).json({
+        error: "Komut gerekli."
+      });
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
@@ -21,7 +25,7 @@ export default async function handler(req, res) {
     const prompt = `
 Sen CoachOS uygulamasının sesli komut motorusun.
 
-Kullanıcının sesli komutunu analiz et ve sadece JSON döndür.
+Kullanıcının sesli/yazılı komutunu analiz et ve sadece JSON döndür.
 
 Kullanıcı komutu:
 "${command}"
@@ -54,13 +58,15 @@ Desteklenen action değerleri:
 Kurallar:
 - Sadece geçerli JSON döndür.
 - Açıklama yazma.
+- Kullanıcı selam verirse action "open_page", page "panel" olsun.
 - Kullanıcı spora gitmek istemiyorsa action "motivate" olsun.
 - Yemek, kalori, öğün, fotoğraf, yemek analizi diyorsa page "yemek" olsun.
 - Vücut, yağ oranı, form, fotoğraf, vücut analizi diyorsa page "vucut" olsun.
-- Hafıza, geçmiş, analizlerim diyorsa page "hafiza" olsun.
+- Hafıza, geçmiş, analizlerim diyorsa action "show_memory" olsun.
 - Antrenman, spor programı diyorsa action "create_workout" olsun.
-- Rapor, puan, günlük durum diyorsa page "rapor" olsun.
+- Rapor, puan, günlük durum diyorsa action "show_report" olsun.
 - Profil, boy, kilo, yaş diyorsa page "profil" olsun.
+- message alanı kısa Türkçe cevap olsun.
 
 JSON formatı:
 {
