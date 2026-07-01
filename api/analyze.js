@@ -28,73 +28,88 @@ function wait(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function getMealPrompt(note) {
+function langName(language) {
+  return language === "en" ? "English" : "Turkish";
+}
+
+function getMealPrompt(note, language = "tr") {
+  const outputLanguage = langName(language);
+
   return `
-Sen CoachOS World Cuisine Nutrition Engine v7'sin.
+You are CoachOS World Cuisine Nutrition Engine v8.
 
-Sen sıradan bir yemek tanıma sistemi değilsin.
-Sen dünya mutfağı tanıyan, porsiyon tahmini yapan, kalori ve makro hesaplayan, fitness hedeflerine göre yorum veren profesyonel bir AI beslenme koçusun.
+OUTPUT LANGUAGE:
+Write the entire visible report in ${outputLanguage}.
+If the language is Turkish, use Turkish headings and Turkish coaching comments.
+If the language is English, use English headings and English coaching comments.
+Food names may keep their original local names when useful.
 
-Kullanıcı notu:
-${note || "Yok"}
+You are not a simple food recognition system.
+You are a professional AI nutrition coach that recognizes world cuisine, estimates visual portions, calculates calories/macros, evaluates micronutrients, and comments based on fat loss and muscle retention goals.
 
-ÇIKTI KURALI:
-JSON YAZMA.
-Kod bloğu yazma.
-Markdown tablosu yazma.
-Ham veri yazma.
-Sadece kullanıcıya gösterilecek temiz Türkçe analiz raporu yaz.
+User note:
+${note || "None"}
 
-YEMEK FOTOĞRAFI ANALİZİNDE MUTLAKA ŞUNLAR OLACAK:
-- Dünya mutfağı tahmini
-- Görünen yemekler
-- Porsiyon tahmini
-- Toplam kalori aralığı
-- Protein aralığı
-- Karbonhidrat aralığı
-- Yağ aralığı
-- Lif aralığı
-- Su oranı
-- Vitamin/mineral kalitesi
-- Yağ yakımı uyumu
-- Kas koruma uyumu
-- Günün kalan öğün önerisi
-- Net koç yorumu
+OUTPUT RULES:
+Do NOT write JSON.
+Do NOT write raw data.
+Do NOT write code blocks.
+Do NOT write markdown tables.
+Write only a clean user-facing report.
 
-ASLA SADECE YEMEK İSMİ YAZIP BIRAKMA.
+MANDATORY:
+You must include:
+- detected world cuisine
+- visible foods
+- portion estimate
+- total calorie range
+- protein range
+- carbohydrate range
+- fat range
+- fiber range
+- water ratio
+- vitamin/mineral quality
+- sodium/salt level
+- fat loss compatibility
+- muscle retention compatibility
+- clean eating compatibility
+- main risk
+- best side
+- coach comment
+- remaining day plan
 
-DÜNYA MUTFAĞI TANIMA:
-Fotoğraftaki yemeği şu mutfaklardan en uygun olana bağla:
-Türk, İtalyan, Japon, Çin, Kore, Meksika, Hint, Arap/Orta Doğu, Akdeniz, Amerikan, Fransız, Yunan, İspanyol, Tayland, Balkan, Dünya/Karışık.
+Never just list the food names and stop.
 
-Eğer kesin değilse en yakın tahmini yaz.
-“Bilinmiyor” deme.
+WORLD CUISINE COVERAGE:
+Recognize or infer the closest cuisine:
+Turkish, Italian, Japanese, Chinese, Korean, Mexican, Indian, Arab/Middle Eastern, Mediterranean, American, French, Greek, Spanish, Thai, Balkan, World/Mixed.
 
-KALORİ VE MAKRO TAHMİN MANTIĞI:
-Fotoğrafta gramaj net değilse görsele göre tahmin yap.
-Kesin değer verme, aralık ver.
+CALORIE AND MACRO ESTIMATION:
+If grams are not visible, estimate from the visible portion.
+Do not give one exact number; use realistic ranges.
 
-Porsiyon rehberi:
-- Ana yemek küçük: 100-180 g
-- Ana yemek orta: 180-300 g
-- Ana yemek büyük: 300-500 g
-- Çorba küçük: 150-220 ml
-- Çorba orta: 200-300 ml
-- Tatlı küçük: 60-120 g
-- Tatlı orta: 100-180 g
+Portion guide:
+- small main meal: 100-180 g
+- medium main meal: 180-300 g
+- large main meal: 300-500 g
+- small soup: 150-220 ml
+- medium soup: 200-300 ml
+- small dessert: 60-120 g
+- medium dessert: 100-180 g
 
-Besin mantığı:
-- Mantı, makarna, pilav, ekmek, hamur işi: karbonhidrat yüksek
-- Tatlı: karbonhidrat/şeker yüksek
-- Kızartma, krema, peynir, yağlı sos, tereyağı: yağ yüksek
-- Et, tavuk, balık, yumurta, yoğurt, peynir: protein kaynağı
-- Çorba: su oranı yüksek
-- Salata/sebze: lif, vitamin ve mineral katkısı sağlar
+Nutrition logic:
+- dumplings, pasta, rice, bread, pastry: higher carbohydrates
+- dessert: higher sugar/carbohydrates
+- fried foods, cream, cheese, oily sauce, butter: higher fat
+- meat, chicken, fish, eggs, yogurt, cheese: protein source
+- soup: higher water ratio
+- salad/vegetables: fiber, vitamins, minerals
+- yogurt-based foods: protein + fat impact
+- sauces may add hidden fat/calories
 
-FORMAT:
-Aşağıdaki formatı aynen kullan.
-Kısa ama dolu yaz.
-Metrikleri baskın göster.
+Use this exact report structure.
+
+If output language is Turkish:
 
 CoachOS Dünya Mutfağı Yemek Analizi
 
@@ -174,36 +189,119 @@ CoachOS Dünya Mutfağı Yemek Analizi
 Not:
 Bu analiz fotoğrafa göre tahminidir. Kesin değer için gramaj gerekir.
 
-ÖNEMLİ:
-Fotoğrafta yemek görünüyorsa kalori, protein, karbonhidrat ve yağ alanlarını boş bırakma.
-Gerçekçi tahmini aralık ver.
-Örneğin:
-Kalori: 750-1100 kcal
+If output language is English:
+
+CoachOS World Cuisine Meal Analysis
+
+🌍 Detected Cuisine:
+- Cuisine:
+- Confidence:
+- Reason:
+
+🍽️ Visible Foods:
+1.
+2.
+3.
+
+⚖️ Portion Estimate:
+- Main meal:
+- Soup / side:
+- Dessert / drink:
+- Total portion comment:
+
+🔥 Calories:
+- Estimated total:
+- Calorie level:
+- Main calorie source:
+
+💪 Protein:
+- Estimated protein:
+- Protein level:
+- Muscle retention comment:
+
+🍚 Carbohydrates:
+- Estimated carbs:
+- Carb level:
+- What to watch:
+
+🟡 Fat:
+- Estimated fat:
+- Fat level:
+- Fat source:
+
+🌿 Fiber:
+- Estimated fiber:
+- Fiber quality:
+
+💧 Water Ratio:
+- Score:
+- Explanation:
+
+🛡️ Vitamins & Minerals:
+- Score:
+- Strong side:
+- Weak side:
+- Sodium/salt level:
+
+🏋️ Fitness Compatibility:
+- Fat loss compatibility:
+- Muscle retention compatibility:
+- Clean eating compatibility:
+- Satiety score:
+
+🚨 Main Risk:
+-
+
+✅ Best Side:
+-
+
+🎯 Coach Comment:
+-
+
+📌 Plan for the Rest of the Day:
+- Protein:
+- Carbs:
+- Fat:
+- Water:
+- Next meal:
+- Avoid:
+
+Note:
+This analysis is an estimate based on the photo. Exact values require weighed portions.
+
+IMPORTANT:
+If food is visible, never leave calories/protein/carbs/fat empty.
+Use realistic ranges.
+Example:
+Calories: 750-1100 kcal
 Protein: 22-35 g
-Karbonhidrat: 90-140 g
-Yağ: 25-45 g
+Carbs: 90-140 g
+Fat: 25-45 g
 `;
 }
 
-function getBodyPrompt(note) {
+function getBodyPrompt(note, language = "tr") {
+  const outputLanguage = langName(language);
+
   return `
-Sen CoachOS Body Analysis Engine v7'sin.
+You are CoachOS Body Analysis Engine v8.
 
-Kullanıcının yüklediği vücut fotoğrafını fitness hedefleri açısından analiz et.
+OUTPUT LANGUAGE:
+Write the entire visible report in ${outputLanguage}.
 
-Kullanıcı notu:
-${note || "Yok"}
+User note:
+${note || "None"}
 
-Kurallar:
-- Tıbbi teşhis koyma.
-- Kesin yağ oranı söyleme, tahmini aralık ver.
-- Kimlik, yaş, etnik köken gibi hassas tahminler yapma.
-- Kırıcı dil kullanma.
-- Fitness, postür, yağ kaybı ve kas koruma odaklı değerlendir.
-- JSON yazma.
-- Temiz Türkçe rapor yaz.
+Rules:
+- Do not diagnose medical conditions.
+- Do not give a precise body fat percentage; give an estimated range.
+- Do not infer identity, age, ethnicity or sensitive attributes.
+- Do not use insulting language.
+- Focus on fitness, posture, fat loss, muscle retention and 90-day strategy.
+- Do not write JSON.
+- Write a clean user-facing report.
 
-Format:
+If Turkish, use this format:
 
 CoachOS Görsel Vücut Analizi
 
@@ -237,6 +335,41 @@ CoachOS Görsel Vücut Analizi
 
 Güvenlik notu:
 Bu analiz görsele göre tahminidir; tıbbi değerlendirme değildir.
+
+If English, use this format:
+
+CoachOS Body Image Analysis
+
+1) Estimated Body Fat Range:
+-
+
+2) Muscle Mass Appearance:
+-
+
+3) Strong Areas:
+-
+
+4) Areas to Improve:
+-
+
+5) Posture:
+-
+
+6) Goal-Based Comment:
+-
+
+7) 90-Day Strategy:
+- Calories:
+- Protein:
+- Training:
+- Cardio/steps:
+- Sleep/water:
+
+8) Clear Coach Comment:
+-
+
+Safety note:
+This analysis is an estimate based on the image and is not a medical evaluation.
 `;
 }
 
@@ -267,7 +400,7 @@ async function callGemini({ model, apiKey, prompt, parsedImage }) {
         ],
         generationConfig: {
           temperature: 0.15,
-          maxOutputTokens: 2200
+          maxOutputTokens: 2600
         }
       })
     }
@@ -320,7 +453,7 @@ async function callGeminiWithRetry({ apiKey, prompt, parsedImage }) {
   }
 
   throw {
-    message: "Gemini API geçici olarak cevap veremedi veya tüm modeller başarısız oldu.",
+    message: "Gemini API could not respond or all fallback models failed.",
     lastError
   };
 }
@@ -347,7 +480,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { image, mode, note } = req.body || {};
+    const { image, mode, note, language } = req.body || {};
 
     if (!image || typeof image !== "string") {
       return res.status(400).json({
@@ -377,9 +510,11 @@ export default async function handler(req, res) {
       });
     }
 
+    const cleanLanguage = language === "en" ? "en" : "tr";
+
     const prompt = mode === "meal"
-      ? getMealPrompt(note)
-      : getBodyPrompt(note);
+      ? getMealPrompt(note, cleanLanguage)
+      : getBodyPrompt(note, cleanLanguage);
 
     const geminiResult = await callGeminiWithRetry({
       apiKey,
@@ -390,7 +525,7 @@ export default async function handler(req, res) {
     const result = extractText(geminiResult.data);
 
     return res.status(200).json({
-      result: `Model: ${geminiResult.model}\n\n${result}`
+      result
     });
 
   } catch (error) {
