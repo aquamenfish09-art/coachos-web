@@ -6,6 +6,11 @@ export const config = {
   }
 };
 
+const GEMINI_MODELS = [
+  "gemini-2.5-flash",
+  "gemini-2.5-flash-lite"
+];
+
 function parseDataUrl(dataUrl) {
   if (!dataUrl || typeof dataUrl !== "string") return null;
 
@@ -17,6 +22,10 @@ function parseDataUrl(dataUrl) {
     mimeType: match[1],
     base64Data: match[2]
   };
+}
+
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function safe(value, fallback = "Fotoğrafa göre net değil, tahmini değerlendirme gerekir.") {
@@ -34,7 +43,7 @@ function list(items) {
 }
 
 function numberRange(value, unit) {
-  if (!value) return `Tahmini aralık verilemedi ${unit ? "(" + unit + ")" : ""}`;
+  if (!value) return `Tahmini aralık verilemedi${unit ? " (" + unit + ")" : ""}`;
 
   if (typeof value === "string") return value;
 
@@ -50,7 +59,26 @@ function numberRange(value, unit) {
   return String(value);
 }
 
-function formatMealAnalysis(json) {
+function extractJson(text) {
+  if (!text || typeof text !== "string") return null;
+
+  try {
+    return JSON.parse(text);
+  } catch {}
+
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+
+  if (start === -1 || end === -1 || end <= start) return null;
+
+  try {
+    return JSON.parse(text.slice(start, end + 1));
+  } catch {
+    return null;
+  }
+}
+
+function formatMealAnalysis(json, modelUsed) {
   const foods = Array.isArray(json.foods) ? json.foods : [];
   const macros = json.macros || {};
   const portions = json.portions || {};
@@ -59,7 +87,8 @@ function formatMealAnalysis(json) {
   const diet = json.diet_score || {};
   const remaining = json.remaining_day_advice || {};
 
-  return `CoachOS Nutrition Engine v3
+  return `CoachOS Nutrition Engine v4
+Model: ${modelUsed}
 
 Yemek Analizi:
 
@@ -108,10 +137,11 @@ ${safe(json.coach_comment, "Bu öğün tek başına kötü değil; önemli olan 
 Bu analiz fotoğrafa göre tahminidir. Kesin değer için gramaj gerekir.`;
 }
 
-function formatBodyAnalysis(json) {
+function formatBodyAnalysis(json, modelUsed) {
   const strategy = json.strategy_90_days || {};
 
-  return `CoachOS Body Analysis Engine v3
+  return `CoachOS Body Analysis Engine v4
+Model: ${modelUsed}
 
 Görsel Vücut Analizi:
 
@@ -147,28 +177,9 @@ ${safe(json.coach_comment, "Sistemli ilerlersen 90 günde görünür değişim a
 Bu analiz görsele göre tahminidir; tıbbi değerlendirme değildir.`;
 }
 
-function extractJson(text) {
-  if (!text || typeof text !== "string") return null;
-
-  try {
-    return JSON.parse(text);
-  } catch {}
-
-  const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
-
-  if (start === -1 || end === -1 || end <= start) return null;
-
-  try {
-    return JSON.parse(text.slice(start, end + 1));
-  } catch {
-    return null;
-  }
-}
-
 function getMealPrompt(note) {
   return `
-Sen CoachOS'un yemek görsel analiz motorusun.
+Sen CoachOS Nutrition Engine v4'sün.
 
 Görev:
 Fotoğraftaki yemeği analiz et ve SADECE JSON döndür.
@@ -177,8 +188,8 @@ Kullanıcı notu:
 ${note || "Yok"}
 
 ZORUNLU:
-- Sadece yemek isimlerini yazıp bırakma.
-- Kalori, protein, karbonhidrat, yağ, lif, su oranı, vitamin/mineral kalitesi ve diyet uyumu alanlarını mutlaka doldur.
+- Yemek isimlerini yazıp bırakma.
+- Kalori, protein, karbonhidrat, yağ, lif, su oranı, vitamin/mineral kalitesi ve diyet uyumu alanlarını MUTLAKA doldur.
 - Emin değilsen tahmini aralık ver.
 - Alanları boş bırakma.
 - Değerler fotoğrafa göre tahmini olacak.
@@ -253,7 +264,7 @@ Sadece JSON döndür.
 
 function getBodyPrompt(note) {
   return `
-Sen CoachOS'un görsel vücut analiz motorusun.
+Sen CoachOS Body Analysis Engine v4'sün.
 
 Görev:
 Fotoğraftaki vücudu fitness hedefleri açısından analiz et ve SADECE JSON döndür.
@@ -293,6 +304,94 @@ JSON ŞEMASI:
 
 Sadece JSON döndür.
 `;
+}
+
+async function callGemini({ model, apiKey, prompt, parsedImage }) {
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                text: prompt
+              },
+              {
+                inline_data: {
+                  mime_type: parsedImage.mimeType,
+                  data: parsedImage.base64Data
+                }
+              }
+            ]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.05,
+          maxOutputTokens: 2200,
+          responseMimeType: "application/json"
+        }
+      })
+    }
+  );
+
+  const data = await response.json();
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    data
+  };
+}
+
+async function callGeminiWithRetry({ apiKey, prompt, parsedImage }) {
+  let lastError = null;
+
+  for (const model of GEMINI_MODELS) {
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const result = await callGemini({
+        model,
+        apiKey,
+        prompt,
+        parsedImage
+      });
+
+      if (result.ok) {
+        return {
+          model,
+          data: result.data
+        };
+      }
+
+      lastError = {
+        model,
+        attempt,
+        status: result.status,
+        data: result.data
+      };
+
+      const isTemporary =
+        result.status === 500 ||
+        result.status === 503 ||
+        result.status === 429;
+
+      if (!isTemporary) {
+        break;
+      }
+
+      await wait(700 * attempt);
+    }
+  }
+
+  throw {
+    message: "Gemini API geçici olarak cevap veremedi veya tüm yedek modeller başarısız oldu.",
+    lastError
+  };
 }
 
 export default async function handler(req, res) {
@@ -337,50 +436,14 @@ export default async function handler(req, res) {
       ? getMealPrompt(note)
       : getBodyPrompt(note);
 
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [
-                {
-                  text: prompt
-                },
-                {
-                  inline_data: {
-                    mime_type: parsedImage.mimeType,
-                    data: parsedImage.base64Data
-                  }
-                }
-              ]
-            }
-          ],
-          generationConfig: {
-            temperature: 0.05,
-            maxOutputTokens: 2200,
-            responseMimeType: "application/json"
-          }
-        })
-      }
-    );
-
-    const data = await geminiResponse.json();
-
-    if (!geminiResponse.ok) {
-      return res.status(500).json({
-        error: "Gemini API hatası.",
-        details: data
-      });
-    }
+    const geminiResult = await callGeminiWithRetry({
+      apiKey,
+      prompt,
+      parsedImage
+    });
 
     const raw =
-      data.candidates?.[0]?.content?.parts
+      geminiResult.data.candidates?.[0]?.content?.parts
         ?.map(part => part.text || "")
         .join("")
         .trim() || "";
@@ -390,14 +453,14 @@ export default async function handler(req, res) {
     if (!parsed) {
       return res.status(200).json({
         result:
-          "CoachOS Nutrition Engine v3\n\nModel yapılandırılmış analiz döndüremedi.\n\nHam çıktı:\n" +
+          `CoachOS Engine v4\nModel: ${geminiResult.model}\n\nModel yapılandırılmış analiz döndüremedi.\n\nHam çıktı:\n` +
           raw
       });
     }
 
     const result = mode === "meal"
-      ? formatMealAnalysis(parsed)
-      : formatBodyAnalysis(parsed);
+      ? formatMealAnalysis(parsed, geminiResult.model)
+      : formatBodyAnalysis(parsed, geminiResult.model);
 
     return res.status(200).json({
       result
@@ -405,8 +468,8 @@ export default async function handler(req, res) {
 
   } catch (error) {
     return res.status(500).json({
-      error: "Sunucu hatası.",
-      details: error.message
+      error: "Gemini API hatası.",
+      details: error
     });
   }
 }
