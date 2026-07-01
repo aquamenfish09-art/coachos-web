@@ -300,6 +300,134 @@
       font-family: Arial, sans-serif;
     }
 
+    /* Tracking System Styles */
+    .tracking-circle-container {
+      display: flex;
+      justify-content: center;
+      margin: 20px 0;
+    }
+
+    .tracking-circle {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      position: relative;
+      font-size: 48px;
+      font-weight: 900;
+      color: #22c55e;
+      background: conic-gradient(#22c55e var(--score-angle), #253044 0deg);
+      box-shadow: inset 0 0 0 8px #111827;
+    }
+
+    .tracking-circle-inner {
+      width: 164px;
+      height: 164px;
+      border-radius: 50%;
+      background: #111827;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    .tracking-circle-score {
+      font-size: 48px;
+      font-weight: 900;
+      color: #22c55e;
+    }
+
+    .tracking-circle-label {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+
+    .progress-bar-container {
+      margin-bottom: 18px;
+    }
+
+    .progress-bar-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .progress-bar-label-left {
+      color: #94a3b8;
+    }
+
+    .progress-bar-label-right {
+      color: #22c55e;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 12px;
+      background: #253044;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid #334155;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #22c55e, #38bdf8);
+      transition: width 0.3s ease;
+      border-radius: 20px;
+    }
+
+    .tracking-button-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .tracking-button-group .btn {
+      margin: 0;
+      padding: 12px;
+      font-size: 13px;
+    }
+
+    .summary-stat {
+      display: inline-block;
+      margin-right: 12px;
+      margin-bottom: 8px;
+      padding: 8px 12px;
+      background: #0f172a;
+      border-radius: 10px;
+      border: 1px solid #334155;
+      font-weight: 800;
+    }
+
+    .summary-stat-label {
+      color: #94a3b8;
+      font-size: 12px;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .summary-stat-value {
+      color: #22c55e;
+      font-size: 18px;
+    }
+
+    .coach-comment-box {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 14px;
+      margin-top: 14px;
+      line-height: 1.5;
+      color: #cbd5e1;
+    }
+
     @media(min-width: 850px) {
       .two {
         display: grid;
@@ -318,6 +446,10 @@
       .insight-grid {
         grid-template-columns: repeat(2, 1fr);
       }
+
+      .tracking-button-group {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
     }
   </style>
 </head>
@@ -335,6 +467,7 @@
 
 <nav>
   <button class="active" onclick="showPage('panel', this)" data-i18n="panel">Panel</button>
+  <button onclick="showPage('takip', this)" data-i18n="takip">Takip</button>
   <button onclick="showPage('profil', this)" data-i18n="profil">Profil</button>
   <button onclick="showPage('yemek', this)" data-i18n="yemek">Yemek</button>
   <button onclick="showPage('vucut', this)" data-i18n="vucut">Vücut</button>
@@ -359,9 +492,14 @@
     <div class="stat"><span data-i18n="steps">Adım</span> <b id="pAdim">-</b></div>
   </div>
 
+  <div class="card" id="dailyTrackingSummaryCard" style="display: none;">
+    <h3 data-i18n="dailyTrackingSummary">Günlük Takip Özeti</h3>
+    <div id="dailyTrackingSummaryContent" style="margin-top: 12px;"></div>
+  </div>
+
   <div class="card">
     <h3 data-i18n="voiceTitle">Sesli / Yazılı Komut</h3>
-    <p class="small" data-i18n="voiceHint">Örnek: “Yemek analizi aç”, “Hafızamı göster”, “Bugün spora gitmek istemiyorum”.</p>
+    <p class="small" data-i18n="voiceHint">Örnek: "Yemek analizi aç", "Hafızamı göster", "Bugün spora gitmek istemiyorum".</p>
 
     <button class="btn" onclick="startVoiceCommand()" data-i18n="speakBtn">🎙 Konuş</button>
     <textarea id="voiceText" data-placeholder="voicePlaceholder" placeholder="Ses algılanmazsa komutu buraya yaz."></textarea>
@@ -379,6 +517,55 @@
   <div class="card">
     <h3 data-i18n="memorySummaryTitle">Görsel Hafıza Özeti</h3>
     <div class="result" id="memorySummary">Henüz görsel analiz yok.</div>
+  </div>
+</section>
+
+<section id="takip">
+  <div class="card">
+    <h2 data-i18n="trackingTitle">Günlük Takip</h2>
+    <p class="small" data-i18n="trackingHint">Bugünkü kalori, protein, su, adım ve antrenman durumunu gir.</p>
+
+    <label data-i18n="todayCalories">Bugünkü kalori</label>
+    <input id="takipKalori" type="number" placeholder="0" min="0">
+
+    <label data-i18n="todayProtein">Bugünkü protein g</label>
+    <input id="takipProtein" type="number" placeholder="0" min="0">
+
+    <label data-i18n="todayWater">Bugünkü su litre</label>
+    <input id="takipSu" type="number" placeholder="0" min="0" step="0.1">
+
+    <label data-i18n="todaySteps">Bugünkü adım</label>
+    <input id="takipAdim" type="number" placeholder="0" min="0">
+
+    <label data-i18n="todayWorkout">Antrenman durumu</label>
+    <select id="takipAntrenman">
+      <option value="done" data-tr="Yaptım" data-en="Done">Yaptım / Done</option>
+      <option value="minimum" data-tr="Minimum görev" data-en="Minimum task">Minimum görev / Minimum task</option>
+      <option value="missed" data-tr="Yapmadım" data-en="Missed">Yapmadım / Missed</option>
+    </select>
+
+    <div class="tracking-button-group">
+      <button class="btn" onclick="takipKaydet()" data-i18n="saveTracking">Takibi Kaydet</button>
+      <button class="btn secondary" onclick="takipBugunuYukle(true)" data-i18n="loadToday">Bugünü Yükle</button>
+      <button class="btn danger" onclick="takipTemizle()" data-i18n="clearToday">Bugünü Temizle</button>
+    </div>
+  </div>
+
+  <div class="card" id="trackingResultCard">
+    <h3 data-i18n="trackingResult">Takip Sonucu</h3>
+    
+    <div class="tracking-circle-container">
+      <div class="tracking-circle" id="trackingCircle" style="--score-angle: 0deg;">
+        <div class="tracking-circle-inner">
+          <div class="tracking-circle-score" id="trackingScore">0</div>
+          <div class="tracking-circle-label">/100</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="trackingBarsContainer"></div>
+
+    <div class="coach-comment-box" id="trackingCoachComment"></div>
   </div>
 </section>
 
@@ -574,6 +761,7 @@ const LANG = {
   tr: {
     appTitle: "CoachOS - AI Fitness Koçu",
     panel: "Panel",
+    takip: "Takip",
     profil: "Profil",
     yemek: "Yemek",
     vucut: "Vücut",
@@ -590,7 +778,7 @@ const LANG = {
     panelHeroTitle: "Motivasyon biter, sistem devam eder.",
     panelHeroText: "Profilini kur. CoachOS sana kalori, makro, görsel analiz, hafıza, antrenman ve günlük görev çıkarır.",
     voiceTitle: "Sesli / Yazılı Komut",
-    voiceHint: "Örnek: “Yemek analizi aç”, “Hafızamı göster”, “Bugün spora gitmek istemiyorum”.",
+    voiceHint: "Örnek: "Yemek analizi aç", "Hafızamı göster", "Bugün spora gitmek istemiyorum".",
     voicePlaceholder: "Ses algılanmazsa komutu buraya yaz.",
     speakBtn: "🎙 Konuş",
     sendCommand: "Komutu Gönder",
@@ -653,12 +841,26 @@ const LANG = {
     cuisine: "Mutfak",
     mainRisk: "Ana Risk",
     bestSide: "En İyi Taraf",
-    coachView: "Koç Yorumu"
+    coachView: "Koç Yorumu",
+    trackingTitle: "Günlük Takip",
+    trackingHint: "Bugünkü kalori, protein, su, adım ve antrenman durumunu gir.",
+    todayCalories: "Bugünkü kalori",
+    todayProtein: "Bugünkü protein g",
+    todayWater: "Bugünkü su litre",
+    todaySteps: "Bugünkü adım",
+    todayWorkout: "Antrenman durumu",
+    saveTracking: "Takibi Kaydet",
+    loadToday: "Bugünü Yükle",
+    clearToday: "Bugünü Temizle",
+    trackingResult: "Takip Sonucu",
+    trackingEmpty: "Bugünkü verileri gir.",
+    dailyTrackingSummary: "Günlük Takip Özeti"
   },
 
   en: {
     appTitle: "CoachOS - AI Fitness Coach",
     panel: "Dashboard",
+    takip: "Tracking",
     profil: "Profile",
     yemek: "Meal",
     vucut: "Body",
@@ -675,7 +877,7 @@ const LANG = {
     panelHeroTitle: "Motivation ends. The system continues.",
     panelHeroText: "Set up your profile. CoachOS creates calories, macros, visual analysis, memory, workouts and daily tasks.",
     voiceTitle: "Voice / Text Command",
-    voiceHint: "Examples: “Open meal analysis”, “Show my memory”, “I don’t want to train today”.",
+    voiceHint: "Examples: "Open meal analysis", "Show my memory", "I don't want to train today".",
     voicePlaceholder: "If voice is not detected, type your command here.",
     speakBtn: "🎙 Speak",
     sendCommand: "Send Command",
@@ -716,7 +918,7 @@ const LANG = {
     createWorkout: "Create Program",
     pressButton: "Press the button.",
     motivationDiscipline: "Motivation + Discipline",
-    motivationPlaceholder: "I don’t want to train today...",
+    motivationPlaceholder: "I don't want to train today...",
     coachAnswer: "Coach Answer",
     writeMood: "Write your mood.",
     dailyReport: "Daily Report",
@@ -738,7 +940,20 @@ const LANG = {
     cuisine: "Cuisine",
     mainRisk: "Main Risk",
     bestSide: "Best Side",
-    coachView: "Coach Comment"
+    coachView: "Coach Comment",
+    trackingTitle: "Daily Tracking",
+    trackingHint: "Enter today's calories, protein, water, steps and workout status.",
+    todayCalories: "Today's calories",
+    todayProtein: "Today's protein g",
+    todayWater: "Today's water liters",
+    todaySteps: "Today's steps",
+    todayWorkout: "Workout status",
+    saveTracking: "Save Tracking",
+    loadToday: "Load Today",
+    clearToday: "Clear Today",
+    trackingResult: "Tracking Result",
+    trackingEmpty: "Enter today's data.",
+    dailyTrackingSummary: "Daily Tracking Summary"
   }
 };
 
@@ -781,6 +996,7 @@ function showPage(id, btn) {
   if (btn) btn.classList.add("active");
 
   if (id === "hafiza") hafizaGoster();
+  if (id === "takip") takipGuncelle();
 
   window.scrollTo(0, 0);
 }
@@ -795,6 +1011,7 @@ function goPage(id) {
   });
 
   if (id === "hafiza") hafizaGoster();
+  if (id === "takip") takipGuncelle();
 
   window.scrollTo(0, 0);
 }
@@ -918,6 +1135,274 @@ function panelGuncelle() {
       ? `Total ${memory.length} analyses.\nMeal: ${meal}\nBody: ${body}\nLast record: ${memory[0].date}`
       : `Toplam ${memory.length} analiz var.\nYemek: ${meal}\nVücut: ${body}\nSon kayıt: ${memory[0].date}`
     : t("noMemory");
+
+  panelUpdateDailyTrackingSummary();
+}
+
+function panelUpdateDailyTrackingSummary() {
+  const today = todayKey();
+  const tracking = getTracking();
+  const targets = getTargets();
+  
+  if (!tracking || !targets) {
+    document.getElementById("dailyTrackingSummaryCard").style.display = "none";
+    return;
+  }
+
+  const score = calcTrackingScore(tracking, targets);
+  const summary = document.getElementById("dailyTrackingSummaryContent");
+  
+  const lang = getCurrentLanguage();
+  const html = `
+<div style="margin-bottom: 12px;">
+  <div class="summary-stat">
+    <div class="summary-stat-label">${lang === "tr" ? "Skor" : "Score"}</div>
+    <div class="summary-stat-value">${score}/100</div>
+  </div>
+  <div class="summary-stat">
+    <div class="summary-stat-label">${t("calorie")}</div>
+    <div class="summary-stat-value">${tracking.kalori}/${targets.kalori}</div>
+  </div>
+  <div class="summary-stat">
+    <div class="summary-stat-label">${t("protein")}</div>
+    <div class="summary-stat-value">${tracking.protein}/${targets.protein}g</div>
+  </div>
+  <div class="summary-stat">
+    <div class="summary-stat-label">${t("water")}</div>
+    <div class="summary-stat-value">${tracking.su}/${targets.su}L</div>
+  </div>
+  <div class="summary-stat">
+    <div class="summary-stat-label">${t("steps")}</div>
+    <div class="summary-stat-value">${tracking.adim}/${targets.adim}</div>
+  </div>
+</div>
+  `;
+  
+  summary.innerHTML = html;
+  document.getElementById("dailyTrackingSummaryCard").style.display = "block";
+}
+
+// TRACKING SYSTEM FUNCTIONS
+function todayKey() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getTrackingKey() {
+  return `coachos_tracking_${todayKey()}`;
+}
+
+function getTargets() {
+  const profile = JSON.parse(localStorage.getItem("coachos") || "{}");
+  
+  if (!profile.kalori) {
+    return {
+      kalori: 2400,
+      protein: 160,
+      su: 3,
+      adim: 9000
+    };
+  }
+  
+  return {
+    kalori: profile.kalori,
+    protein: profile.protein,
+    su: profile.su,
+    adim: profile.adim
+  };
+}
+
+function getTracking() {
+  const key = getTrackingKey();
+  const data = localStorage.getItem(key);
+  return data ? JSON.parse(data) : null;
+}
+
+function calcTrackingScore(data, targets) {
+  if (!data || !targets) return 0;
+  
+  let score = 0;
+  
+  const kaloriPercent = Math.min(data.kalori / targets.kalori, 1);
+  score += kaloriPercent * 25;
+  
+  const proteinPercent = Math.min(data.protein / targets.protein, 1);
+  score += proteinPercent * 30;
+  
+  const suPercent = Math.min(data.su / targets.su, 1);
+  score += suPercent * 15;
+  
+  const adimPercent = Math.min(data.adim / targets.adim, 1);
+  score += adimPercent * 15;
+  
+  if (data.antrenman === "done") {
+    score += 15;
+  } else if (data.antrenman === "minimum") {
+    score += 8;
+  }
+  
+  return Math.min(Math.round(score), 100);
+}
+
+function progressHtml(label, done, target, unit) {
+  const percent = Math.min((done / target) * 100, 100);
+  const remaining = Math.max(target - done, 0);
+  const lang = getCurrentLanguage();
+  
+  return `
+<div class="progress-bar-container">
+  <div class="progress-bar-label">
+    <span class="progress-bar-label-left">${label}</span>
+    <span class="progress-bar-label-right">${done}/${target}${unit}</span>
+  </div>
+  <div class="progress-bar">
+    <div class="progress-bar-fill" style="width: ${percent}%;"></div>
+  </div>
+  <div style="color: #94a3b8; font-size: 12px; margin-top: 4px;">
+    ${lang === "tr" ? "Kalan" : "Remaining"}: ${remaining}${unit}
+  </div>
+</div>
+  `;
+}
+
+function getCoachComment(score) {
+  const lang = getCurrentLanguage();
+  
+  if (lang === "tr") {
+    if (score >= 85) {
+      return "Güçlü gün. Sistemi koruyorsun.";
+    } else if (score >= 65) {
+      return "Orta gün. Şu an sonucu protein ve adım belirler.";
+    } else if (score < 45) {
+      return "Düşük skor. Hemen minimum görev: protein + su + 10 dakika yürüyüş.";
+    } else {
+      return "Güzel başlangıç. Eksik hedefleri tamamlayıp günü kurtar.";
+    }
+  } else {
+    if (score >= 85) {
+      return "Strong day. You are protecting the system.";
+    } else if (score >= 65) {
+      return "Average day. Protein and steps decide the result now.";
+    } else if (score < 45) {
+      return "Low score. Do the minimum task now: protein + water + 10 minute walk.";
+    } else {
+      return "Good start. Keep tracking and complete the missing targets.";
+    }
+  }
+}
+
+function takipGuncelle(data = null) {
+  const tracking = data || getTracking();
+  const targets = getTargets();
+  
+  if (tracking) {
+    document.getElementById("takipKalori").value = tracking.kalori;
+    document.getElementById("takipProtein").value = tracking.protein;
+    document.getElementById("takipSu").value = tracking.su;
+    document.getElementById("takipAdim").value = tracking.adim;
+    document.getElementById("takipAntrenman").value = tracking.antrenman;
+    
+    const score = calcTrackingScore(tracking, targets);
+    const angle = (score / 100) * 360;
+    const circle = document.getElementById("trackingCircle");
+    circle.style.setProperty("--score-angle", angle + "deg");
+    document.getElementById("trackingScore").textContent = score;
+    
+    let barsHtml = "";
+    barsHtml += progressHtml(
+      t("calorie"),
+      tracking.kalori,
+      targets.kalori,
+      ""
+    );
+    barsHtml += progressHtml(
+      t("protein"),
+      tracking.protein,
+      targets.protein,
+      "g"
+    );
+    barsHtml += progressHtml(
+      t("water"),
+      tracking.su,
+      targets.su,
+      "L"
+    );
+    barsHtml += progressHtml(
+      t("steps"),
+      tracking.adim,
+      targets.adim,
+      ""
+    );
+    
+    document.getElementById("trackingBarsContainer").innerHTML = barsHtml;
+    
+    const comment = getCoachComment(score);
+    document.getElementById("trackingCoachComment").innerHTML = comment;
+  } else {
+    document.getElementById("takipKalori").value = "";
+    document.getElementById("takipProtein").value = "";
+    document.getElementById("takipSu").value = "";
+    document.getElementById("takipAdim").value = "";
+    document.getElementById("takipAntrenman").value = "done";
+    
+    document.getElementById("trackingCircle").style.setProperty("--score-angle", "0deg");
+    document.getElementById("trackingScore").textContent = "0";
+    document.getElementById("trackingBarsContainer").innerHTML = "";
+    document.getElementById("trackingCoachComment").textContent = t("trackingEmpty");
+  }
+}
+
+function takipKaydet() {
+  const kalori = val("takipKalori", 0);
+  const protein = val("takipProtein", 0);
+  const su = val("takipSu", 0);
+  const adim = val("takipAdim", 0);
+  const antrenman = document.getElementById("takipAntrenman").value;
+  
+  const data = {
+    kalori: Math.round(kalori),
+    protein: Math.round(protein),
+    su: su,
+    adim: Math.round(adim),
+    antrenman: antrenman
+  };
+  
+  const key = getTrackingKey();
+  localStorage.setItem(key, JSON.stringify(data));
+  
+  takipGuncelle(data);
+  panelUpdateDailyTrackingSummary();
+}
+
+function takipBugunuYukle(fillInputs = false) {
+  const tracking = getTracking();
+  
+  if (!tracking) {
+    alert(getCurrentLanguage() === "tr" 
+      ? "Bugünkü veri bulunamadı." 
+      : "No data found for today.");
+    return;
+  }
+  
+  if (fillInputs) {
+    takipGuncelle(tracking);
+  }
+}
+
+function takipTemizle() {
+  const confirm_msg = getCurrentLanguage() === "tr"
+    ? "Bugünkü verileri silmek istediğinden emin misin?"
+    : "Are you sure you want to clear today's data?";
+  
+  if (confirm(confirm_msg)) {
+    const key = getTrackingKey();
+    localStorage.removeItem(key);
+    takipGuncelle();
+    panelUpdateDailyTrackingSummary();
+  }
 }
 
 function previewImage(event, id) {
@@ -1000,649 +1485,343 @@ function imageFileToJpegDataUrl(file, maxSize = 1200, quality = 0.82) {
   });
 }
 
-function hafizayaKaydet(type, result, note = "") {
-  const memory = JSON.parse(localStorage.getItem("coachos_visual_memory") || "[]");
-
-  memory.unshift({
-    id: Date.now(),
-    type,
-    title: type === "meal" ? t("memoryMeal") : t("memoryBody"),
-    result,
-    note,
-    language: getCurrentLanguage(),
-    date: new Date().toLocaleString(getCurrentLanguage() === "en" ? "en-US" : "tr-TR")
-  });
-
-  localStorage.setItem("coachos_visual_memory", JSON.stringify(memory.slice(0, 50)));
-  panelGuncelle();
-}
-
-function escapeHtml(str) {
-  return String(str || "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;")
-    .replaceAll("\n", "<br>");
-}
-
-function cleanLine(line) {
-  return String(line || "")
-    .replace(/^[-•\d.)\s]+/, "")
-    .trim();
-}
-
-function pickValue(raw, labels, fallback = "-") {
-  const lines = String(raw || "").split("\n");
-
-  for (const line of lines) {
-    const cleaned = cleanLine(line);
-    const lower = cleaned.toLocaleLowerCase("tr-TR");
-
-    for (const label of labels) {
-      const l = label.toLocaleLowerCase("tr-TR") + ":";
-      if (lower.startsWith(l)) {
-        const value = cleaned.slice(label.length + 1).trim();
-        return value || fallback;
-      }
-    }
-  }
-
-  return fallback;
-}
-
-function pickSectionBullet(raw, sectionWords, fallback = "-") {
-  const lines = String(raw || "").split("\n");
-  let active = false;
-
-  for (const line of lines) {
-    const cleaned = cleanLine(line);
-    const lower = cleaned.toLocaleLowerCase("tr-TR");
-
-    if (sectionWords.some(word => lower.includes(word.toLocaleLowerCase("tr-TR")))) {
-      active = true;
-      continue;
-    }
-
-    if (active && cleaned && !cleaned.includes(":")) {
-      return cleaned;
-    }
-
-    if (active && cleaned.startsWith("-")) {
-      return cleanLine(cleaned);
-    }
-  }
-
-  return fallback;
-}
-
-function renderAnalysisResult(targetId, rawText, type) {
-  const el = document.getElementById(targetId);
-  if (!el) return;
-
-  const raw = String(rawText || "");
-  const isEnglish = getCurrentLanguage() === "en";
-
-  if (type === "body") {
-    el.innerHTML = `
-      <div class="analysis-shell">
-        <div class="analysis-hero">
-          <small>${isEnglish ? "COACHOS BODY ENGINE" : "COACHOS VÜCUT MOTORU"}</small>
-          <h3>${isEnglish ? "Body Analysis Ready" : "Vücut Analizi Hazır"}</h3>
-          <p>${isEnglish ? "The report is structured below with full details." : "Rapor aşağıda düzenli şekilde hazırlandı."}</p>
-        </div>
-
-        <details class="full-report" open>
-          <summary>${t("fullReport")}</summary>
-          <pre>${escapeHtml(raw)}</pre>
-        </details>
-      </div>
-    `;
-    return;
-  }
-
-  const cuisine = pickValue(raw, ["Mutfak", "Cuisine"], "-");
-  const calories = pickValue(raw, ["Tahmini toplam", "Estimated total"], "-");
-  const protein = pickValue(raw, ["Tahmini protein", "Estimated protein"], "-");
-  const carbs = pickValue(raw, ["Tahmini karbonhidrat", "Estimated carbs"], "-");
-  const fat = pickValue(raw, ["Tahmini yağ", "Estimated fat"], "-");
-  const fiber = pickValue(raw, ["Tahmini lif", "Estimated fiber"], "-");
-  const waterScore = pickValue(raw, ["Skor", "Score"], "-");
-  const risk = pickSectionBullet(raw, ["Ana Risk", "Main Risk"], "-");
-  const best = pickSectionBullet(raw, ["En İyi Taraf", "Best Side"], "-");
-  const coach = pickSectionBullet(raw, ["Koç Yorumu", "Coach Comment"], "-");
-
-  el.innerHTML = `
-    <div class="analysis-shell">
-      <div class="analysis-hero">
-        <small>${isEnglish ? "COACHOS WORLD CUISINE ENGINE" : "COACHOS DÜNYA MUTFAĞI MOTORU"}</small>
-        <h3>${isEnglish ? "Meal Analysis Ready" : "Yemek Analizi Hazır"}</h3>
-        <p>${t("cuisine")}: <strong>${escapeHtml(cuisine)}</strong></p>
-      </div>
-
-      <div class="metric-grid">
-        <div class="metric-tile calorie">
-          <div class="label">🔥 ${t("calorie")}</div>
-          <div class="value">${escapeHtml(calories)}</div>
-        </div>
-
-        <div class="metric-tile protein">
-          <div class="label">💪 ${t("protein")}</div>
-          <div class="value">${escapeHtml(protein)}</div>
-        </div>
-
-        <div class="metric-tile carbs">
-          <div class="label">🍚 ${isEnglish ? "Carbs" : "Karbonhidrat"}</div>
-          <div class="value">${escapeHtml(carbs)}</div>
-        </div>
-
-        <div class="metric-tile fat">
-          <div class="label">🟡 ${isEnglish ? "Fat" : "Yağ"}</div>
-          <div class="value">${escapeHtml(fat)}</div>
-        </div>
-
-        <div class="metric-tile">
-          <div class="label">🌿 ${isEnglish ? "Fiber" : "Lif"}</div>
-          <div class="value">${escapeHtml(fiber)}</div>
-        </div>
-
-        <div class="metric-tile">
-          <div class="label">💧 ${isEnglish ? "Water Ratio" : "Su Oranı"}</div>
-          <div class="value">${escapeHtml(waterScore)}</div>
-        </div>
-      </div>
-
-      <div class="insight-grid">
-        <div class="insight-card">
-          <strong>🚨 ${t("mainRisk")}</strong>
-          <span>${escapeHtml(risk)}</span>
-        </div>
-
-        <div class="insight-card">
-          <strong>✅ ${t("bestSide")}</strong>
-          <span>${escapeHtml(best)}</span>
-        </div>
-
-        <div class="insight-card">
-          <strong>🎯 ${t("coachView")}</strong>
-          <span>${escapeHtml(coach)}</span>
-        </div>
-      </div>
-
-      <details class="full-report">
-        <summary>${t("fullReport")}</summary>
-        <pre>${escapeHtml(raw)}</pre>
-      </details>
-    </div>
-  `;
-}
-
-function hafizaGoster() {
-  const memory = JSON.parse(localStorage.getItem("coachos_visual_memory") || "[]");
-  const c = document.getElementById("hafizaListesi");
-
-  if (!memory.length) {
-    c.innerHTML = t("noMemory");
-    return;
-  }
-
-  c.innerHTML = memory.map(item => `
-    <div class="memory-item">
-      <h3>${escapeHtml(item.title)}</h3>
-      <div class="small">${escapeHtml(item.date)}</div>
-      ${item.note ? `<div class="small">Not / Note: ${escapeHtml(item.note)}</div>` : ""}
-      <div>${escapeHtml(item.result)}</div>
-    </div>
-  `).join("");
-}
-
-function hafizaTemizle() {
-  const msg = getCurrentLanguage() === "en"
-    ? "Clear visual memory?"
-    : "Görsel hafıza temizlensin mi?";
-
-  if (!confirm(msg)) return;
-
-  localStorage.removeItem("coachos_visual_memory");
-  hafizaGoster();
-  panelGuncelle();
-}
-
 async function yemekAnaliz() {
   const file = document.getElementById("mealImage").files[0];
-  const note = text("yemekText");
-  const out = document.getElementById("yemekSonuc");
+  const text_note = text("yemekText");
 
   if (!file) {
-    out.textContent = t("selectMealPhoto");
+    alert(t("selectMealPhoto"));
     return;
   }
 
-  out.textContent = t("photoPreparing");
+  document.getElementById("yemekSonuc").textContent = t("mealAnalyzing");
 
   try {
-    const image = await imageFileToJpegDataUrl(file);
+    const base64 = await imageFileToJpegDataUrl(file);
 
-    out.textContent = t("mealAnalyzing");
-
-    const r = await fetch("/api/analyze", {
+    const response = await fetch("/api/analyze", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        image,
-        mode: "meal",
-        note,
-        language: getCurrentLanguage()
+        type: "meal",
+        image: base64,
+        note: text_note
       })
     });
 
-    const data = await r.json();
+    const result = await response.json();
 
-    if (!r.ok) {
-      out.textContent = `${t("apiError")} ${data.error || "Analysis failed."}`;
-      return;
+    if (result.success) {
+      const memory = JSON.parse(localStorage.getItem("coachos_visual_memory") || "[]");
+      const now = new Date();
+
+      memory.unshift({
+        type: "meal",
+        date: now.toLocaleString(getCurrentLanguage() === "tr" ? "tr-TR" : "en-US"),
+        analysis: result.analysis
+      });
+
+      localStorage.setItem("coachos_visual_memory", JSON.stringify(memory));
+
+      document.getElementById("yemekSonuc").textContent = result.analysis;
+    } else {
+      document.getElementById("yemekSonuc").textContent = `${t("analysisError")} ${result.error}`;
     }
-
-    renderAnalysisResult("yemekSonuc", data.result, "meal");
-    hafizayaKaydet("meal", data.result, note);
-
-  } catch (e) {
-    out.textContent = `${t("analysisError")} ${e.message}`;
+  } catch (err) {
+    document.getElementById("yemekSonuc").textContent = `${t("apiError")} ${err.message}`;
   }
+
+  document.getElementById("yemekText").value = "";
+  document.getElementById("mealImage").value = "";
+  document.getElementById("mealPreview").style.display = "none";
 }
 
 async function vucutAnaliz() {
   const file = document.getElementById("bodyImage").files[0];
-  const note = text("vucutText");
-  const out = document.getElementById("vucutSonuc");
+  const text_note = text("vucutText");
 
   if (!file) {
-    out.textContent = t("selectBodyPhoto");
+    alert(t("selectBodyPhoto"));
     return;
   }
 
-  out.textContent = t("photoPreparing");
+  document.getElementById("vucutSonuc").textContent = t("bodyAnalyzing");
 
   try {
-    const image = await imageFileToJpegDataUrl(file);
+    const base64 = await imageFileToJpegDataUrl(file);
 
-    out.textContent = t("bodyAnalyzing");
-
-    const r = await fetch("/api/analyze", {
+    const response = await fetch("/api/analyze", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        image,
-        mode: "body",
-        note,
-        language: getCurrentLanguage()
+        type: "body",
+        image: base64,
+        note: text_note
       })
     });
 
-    const data = await r.json();
+    const result = await response.json();
 
-    if (!r.ok) {
-      out.textContent = `${t("apiError")} ${data.error || "Analysis failed."}`;
-      return;
+    if (result.success) {
+      const memory = JSON.parse(localStorage.getItem("coachos_visual_memory") || "[]");
+      const now = new Date();
+
+      memory.unshift({
+        type: "body",
+        date: now.toLocaleString(getCurrentLanguage() === "tr" ? "tr-TR" : "en-US"),
+        analysis: result.analysis
+      });
+
+      localStorage.setItem("coachos_visual_memory", JSON.stringify(memory));
+
+      document.getElementById("vucutSonuc").textContent = result.analysis;
+    } else {
+      document.getElementById("vucutSonuc").textContent = `${t("analysisError")} ${result.error}`;
     }
-
-    renderAnalysisResult("vucutSonuc", data.result, "body");
-    hafizayaKaydet("body", data.result, note);
-
-  } catch (e) {
-    out.textContent = `${t("analysisError")} ${e.message}`;
+  } catch (err) {
+    document.getElementById("vucutSonuc").textContent = `${t("apiError")} ${err.message}`;
   }
+
+  document.getElementById("vucutText").value = "";
+  document.getElementById("bodyImage").value = "";
+  document.getElementById("bodyPreview").style.display = "none";
 }
 
-function antrenmanOlustur() {
-  const gun = val("sporGun", 4);
+function hafizaGoster() {
+  const memory = JSON.parse(localStorage.getItem("coachos_visual_memory") || "[]");
+  const container = document.getElementById("hafizaListesi");
 
-  if (getCurrentLanguage() === "en") {
-    document.getElementById("antrenmanSonuc").textContent = gun <= 3 ?
-`Full Body Program:
-
-1. Squat / Leg Press — 3x8-12
-2. Dumbbell Bench Press — 3x8-12
-3. Lat Pulldown — 3x8-12
-4. Shoulder Press — 3x8-10
-5. Cable Row — 3x10-12
-6. Plank — 3x30-45 sec
-
-Cardio:
-15-25 minutes walking.` :
-`Upper / Lower Program:
-
-Upper Day:
-- Bench Press 4x6-10
-- Lat Pulldown 4x8-12
-- Shoulder Press 3x8-10
-- Cable Row 3x10-12
-- Lateral Raise 3x12-15
-
-Lower Day:
-- Squat / Leg Press 4x8-12
-- Romanian Deadlift 3x8-10
-- Leg Curl 3x10-12
-- Calf Raise 4x12-15
-
-Tired day:
-3 main movements + 15 minutes walking.`;
+  if (memory.length === 0) {
+    container.textContent = t("noMemory");
     return;
   }
 
-  document.getElementById("antrenmanSonuc").textContent = gun <= 3 ?
-`Full Body Program:
+  let html = "";
 
-1. Squat / Leg Press — 3x8-12
-2. Dumbbell Bench Press — 3x8-12
-3. Lat Pulldown — 3x8-12
-4. Shoulder Press — 3x8-10
-5. Cable Row — 3x10-12
-6. Plank — 3x30-45 sn
+  memory.forEach((item, idx) => {
+    const title = item.type === "meal" ? t("memoryMeal") : t("memoryBody");
+    html += `
+<div class="memory-item">
+  <h3>${title}</h3>
+  <p class="small">${item.date}</p>
+  <div style="white-space: pre-wrap; margin-top: 8px; color: #dbeafe;">${item.analysis}</div>
+</div>
+    `;
+  });
 
-Kardiyo:
-15-25 dk yürüyüş.` :
-`Upper / Lower Program:
-
-Üst Gün:
-- Bench Press 4x6-10
-- Lat Pulldown 4x8-12
-- Shoulder Press 3x8-10
-- Cable Row 3x10-12
-- Lateral Raise 3x12-15
-
-Alt Gün:
-- Squat / Leg Press 4x8-12
-- Romanian Deadlift 3x8-10
-- Leg Curl 3x10-12
-- Calf Raise 4x12-15
-
-Yorgun gün:
-3 ana hareket + 15 dk yürüyüş.`;
+  container.innerHTML = html;
 }
 
-function motivasyonVer() {
-  const mod = text("modText") || (getCurrentLanguage() === "en" ? "I don’t want to train today." : "Bugün spora gitmek istemiyorum.");
+function hafizaTemizle() {
+  const confirm_msg = getCurrentLanguage() === "tr"
+    ? "Tüm hafızayı silmek istediğinden emin misin?"
+    : "Are you sure you want to clear all memory?";
 
-  if (getCurrentLanguage() === "en") {
-    document.getElementById("motivasyonSonuc").textContent =
-`I hear your mood:
-"${mod}"
+  if (confirm(confirm_msg)) {
+    localStorage.removeItem("coachos_visual_memory");
+    hafizaGoster();
+    panelGuncelle();
+  }
+}
 
-But the system works like this:
-When motivation is low, minimum discipline takes over.
+async function antrenmanOlustur() {
+  const profile = JSON.parse(localStorage.getItem("coachos") || "{}");
 
-Today's minimum task:
-- Warm up for 5 minutes
-- Do 3 exercises
-- Walk for 10 minutes
+  if (!profile.kalori) {
+    document.getElementById("antrenmanSonuc").textContent =
+      getCurrentLanguage() === "en"
+        ? "Please set up your profile first."
+        : "Önce profilini kur.";
+    return;
+  }
 
-I don’t expect perfection.
-Just don’t break the chain.`;
+  document.getElementById("antrenmanSonuc").textContent =
+    getCurrentLanguage() === "en"
+      ? "Creating your program..."
+      : "Program oluşturuluyor...";
+
+  try {
+    const response = await fetch("/api/gemini-command", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        command: `You are a fitness coach. Create a personalized ${
+          getCurrentLanguage() === "en" ? "English" : "Turkish"
+        } workout program for someone with these stats:
+Age: ${val("yas")}, Height: ${val("boy")}cm, Weight: ${val("kilo")}kg, Goal: ${text("hedef")}, Activity level: ${text(
+          "tempo"
+        )}, Training days per week: ${val("sporGun")}. Focus on compound movements and progressive overload. Keep it practical.`,
+        lang: getCurrentLanguage()
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      document.getElementById("antrenmanSonuc").textContent = result.response;
+    } else {
+      document.getElementById("antrenmanSonuc").textContent = `Error: ${result.error}`;
+    }
+  } catch (err) {
+    document.getElementById("antrenmanSonuc").textContent = `API Error: ${err.message}`;
+  }
+}
+
+async function motivasyonVer() {
+  const mood = text("modText");
+
+  if (!mood) {
+    alert(getCurrentLanguage() === "en" ? "Write your mood first." : "Modunu yaz.");
     return;
   }
 
   document.getElementById("motivasyonSonuc").textContent =
-`Modunu kabul ediyorum:
-"${mod}"
-
-Ama sistem şöyle çalışıyor:
-Motivasyon yoksa minimum disiplin var.
-
-Bugünkü minimum görev:
-- 5 dakika ısın
-- 3 hareket yap
-- 10 dakika yürü
-
-Tam performans beklemiyorum.
-Sadece zinciri kırma.`;
-}
-
-function raporOlustur() {
-  const puan =
-    Number(text("rProtein")) +
-    Number(text("rAntrenman")) +
-    Number(text("rKalori")) +
-    Number(text("rSu")) +
-    Number(text("rAdim")) +
-    Number(text("rUyku"));
-
-  if (getCurrentLanguage() === "en") {
-    let yorum = "Messy day, but not over. Return tomorrow with the minimum task.";
-    if (puan >= 80) yorum = "Strong day. Keep going.";
-    else if (puan >= 60) yorum = "Average day. The chain is not broken, but tomorrow needs more structure.";
-
-    document.getElementById("raporSonuc").textContent =
-`Today's Score: ${puan}/100
-
-Comment:
-${yorum}
-
-Clear task for tomorrow:
-- Prioritize protein earlier
-- Spread water across the day
-- Add 20 minutes walking
-- If workout is missed, complete the minimum task`;
-    return;
-  }
-
-  let yorum = "Dağıldı ama bitti değil. Yarın minimum görevle sisteme dön.";
-  if (puan >= 80) yorum = "Güzel gün. Böyle devam.";
-  else if (puan >= 60) yorum = "Orta gün. Zincir kırılmadı ama yarın daha net olacağız.";
-
-  document.getElementById("raporSonuc").textContent =
-`Bugünkü Puan: ${puan}/100
-
-Yorum:
-${yorum}
-
-Yarın için net görev:
-- Protein hedefini öne al
-- Suyu gün içine yay
-- 20 dakika yürüyüş ekle
-- Antrenman kaçarsa minimum görev yap`;
-}
-
-function speakText(message) {
-  if (!message || !message.trim()) return;
-  if (!window.speechSynthesis) return;
-
-  window.speechSynthesis.cancel();
-
-  const cleanMessage = message
-    .replace(/[\n\r]+/g, ". ")
-    .replace(/\s+/g, " ")
-    .slice(0, 900);
-
-  const utterance = new SpeechSynthesisUtterance(cleanMessage);
-
-  utterance.lang = getCurrentLanguage() === "en" ? "en-US" : "tr-TR";
-  utterance.rate = 0.95;
-  utterance.pitch = 1;
-  utterance.volume = 1;
-
-  window.speechSynthesis.speak(utterance);
-}
-
-function getCoachOSProfileForGemini() {
-  return {
-    age: text("yas"),
-    height: text("boy"),
-    weight: text("kilo"),
-    sex: text("cinsiyet"),
-    goal: text("hedef"),
-    tempo: text("tempo"),
-    trainingDays: text("sporGun")
-  };
-}
-
-function getCoachOSTargetsForGemini() {
-  try {
-    return JSON.parse(localStorage.getItem("coachos") || "{}");
-  } catch {
-    return {};
-  }
-}
-
-async function sendCommandToGemini(command) {
-  const out = document.getElementById("voiceResult");
-  const input = document.getElementById("voiceText");
-
-  if (!command || !command.trim()) {
-    out.textContent = getCurrentLanguage() === "en"
-      ? "Command is empty. Example: Open meal analysis."
-      : "Komut boş. Örnek: Yemek analizi aç.";
-    return;
-  }
-
-  input.value = command;
-
-  out.textContent = getCurrentLanguage() === "en"
-    ? "Gemini is interpreting your command..."
-    : "Gemini komutu yorumluyor...";
+    getCurrentLanguage() === "en" ? "Coach is thinking..." : "Koç düşünüyor...";
 
   try {
-    const r = await fetch("/api/gemini-command", {
+    const response = await fetch("/api/gemini-command", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        command,
-        profile: getCoachOSProfileForGemini(),
-        targets: getCoachOSTargetsForGemini(),
-        language: getCurrentLanguage()
+        command: `You are a tough but supportive fitness coach. The user wrote: "${mood}". Give them a short, powerful response in ${
+          getCurrentLanguage() === "en" ? "English" : "Turkish"
+        } that motivates them to stay on track. Be direct, practical, and no-nonsense.`,
+        lang: getCurrentLanguage()
       })
     });
 
-    const data = await r.json();
+    const result = await response.json();
 
-    if (!r.ok) {
-      out.textContent = `${t("apiError")} ${data.error || "Gemini command failed."}`;
-      speakText(out.textContent);
-      return;
+    if (result.success) {
+      document.getElementById("motivasyonSonuc").textContent = result.response;
+    } else {
+      document.getElementById("motivasyonSonuc").textContent = `Error: ${result.error}`;
     }
-
-    out.textContent = data.message || (getCurrentLanguage() === "en" ? "Command received." : "Komut alındı.");
-    speakText(out.textContent);
-
-    if (data.action === "motivate") {
-      goPage("motivasyon");
-      document.getElementById("modText").value = command;
-      motivasyonVer();
-
-      const motivationText = document.getElementById("motivasyonSonuc").textContent;
-      speakText(motivationText);
-      return;
-    }
-
-    if (data.action === "create_workout") {
-      goPage("antrenman");
-      antrenmanOlustur();
-      speakText(getCurrentLanguage() === "en"
-        ? "Workout program created. The goal is not perfection today. Do not break the chain."
-        : "Antrenman programını oluşturdum. Bugün amaç mükemmel olmak değil, zinciri kırmamak.");
-      return;
-    }
-
-    if (data.action === "show_memory") {
-      goPage("hafiza");
-      hafizaGoster();
-      return;
-    }
-
-    if (data.action === "show_report") {
-      goPage("rapor");
-      return;
-    }
-
-    if (data.page) {
-      goPage(data.page);
-      return;
-    }
-
-  } catch (e) {
-    out.textContent = `${t("analysisError")} ${e.message}`;
-    speakText(out.textContent);
+  } catch (err) {
+    document.getElementById("motivasyonSonuc").textContent = `API Error: ${err.message}`;
   }
+
+  document.getElementById("modText").value = "";
 }
 
-function sendTypedCommand() {
-  sendCommandToGemini(text("voiceText"));
+function raporOlustur() {
+  const protein = val("rProtein", 0);
+  const antrenman = val("rAntrenman", 0);
+  const kalori = val("rKalori", 0);
+  const su = val("rSu", 0);
+  const adim = val("rAdim", 0);
+  const uyku = val("rUyku", 0);
+
+  const total = protein + antrenman + kalori + su + adim + uyku;
+
+  if (getCurrentLanguage() === "en") {
+    document.getElementById("raporSonuc").textContent = `Daily Report
+
+Total Score: ${total} / 100
+
+Protein: ${protein} points
+Workout: ${antrenman} points
+Calories: ${kalori} points
+Water: ${su} points
+Steps: ${adim} points
+Sleep: ${uyku} points
+
+${total >= 85
+      ? "Excellent day! You crushed it."
+      : total >= 65
+        ? "Good work. Keep pushing."
+        : "You can do better tomorrow."}`;
+  } else {
+    document.getElementById("raporSonuc").textContent = `Günlük Rapor
+
+Toplam Skor: ${total} / 100
+
+Protein: ${protein} puan
+Antrenman: ${antrenman} puan
+Kalori: ${kalori} puan
+Su: ${su} puan
+Adım: ${adim} puan
+Uyku: ${uyku} puan
+
+${total >= 85
+      ? "Harika gün! Öyle devam et."
+      : total >= 65
+        ? "İyi gidiş. Devam et."
+        : "Yarın daha iyisini yapabilirsin."}`;
+  }
 }
 
 function startVoiceCommand() {
-  const out = document.getElementById("voiceResult");
-  const input = document.getElementById("voiceText");
+  const recognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
 
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-  if (!SR) {
-    out.textContent = getCurrentLanguage() === "en"
-      ? "This browser does not support voice recognition. Type your command instead."
-      : "Bu tarayıcı ses tanımayı desteklemiyor. Komutu yazı olarak gir.";
-    if (input) input.focus();
+  if (!recognition) {
+    alert(
+      getCurrentLanguage() === "en"
+        ? "Speech recognition not supported in your browser."
+        : "Tarayıcın sesli komut desteklemiyor."
+    );
     return;
   }
 
+  const rec = new recognition();
+  rec.lang = getCurrentLanguage() === "en" ? "en-US" : "tr-TR";
+
+  rec.start();
+
+  rec.onresult = (event) => {
+    let transcript = "";
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      transcript += event.results[i][0].transcript;
+    }
+    document.getElementById("voiceText").value = transcript;
+  };
+
+  rec.onerror = (event) => {
+    alert(`${t("apiError")} ${event.error}`);
+  };
+}
+
+async function sendTypedCommand() {
+  const cmd = text("voiceText");
+
+  if (!cmd) {
+    alert(getCurrentLanguage() === "en" ? "Type a command first." : "Bir komut yaz.");
+    return;
+  }
+
+  document.getElementById("voiceResult").textContent =
+    getCurrentLanguage() === "en" ? "Processing..." : "İşleniyor...";
+
   try {
-    const rec = new SR();
+    const response = await fetch("/api/gemini-command", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        command: cmd,
+        lang: getCurrentLanguage()
+      })
+    });
 
-    rec.lang = getCurrentLanguage() === "en" ? "en-US" : "tr-TR";
-    rec.interimResults = false;
-    rec.continuous = false;
-    rec.maxAlternatives = 1;
+    const result = await response.json();
 
-    let started = false;
-    let receivedResult = false;
-
-    out.textContent = getCurrentLanguage() === "en"
-      ? "Listening... Start speaking now."
-      : "Dinliyorum... Konuşmaya hemen başla.";
-
-    rec.onstart = function () {
-      started = true;
-      out.textContent = getCurrentLanguage() === "en"
-        ? "Listening... Speak now."
-        : "Dinliyorum... Şimdi konuş.";
-    };
-
-    rec.onresult = function (event) {
-      receivedResult = true;
-      const command = event.results[0][0].transcript;
-      sendCommandToGemini(command);
-    };
-
-    rec.onerror = function () {
-      out.textContent = getCurrentLanguage() === "en"
-        ? "Voice could not be detected. Type the command instead."
-        : "Ses algılanamadı. Komutu yazı olarak da girebilirsin.";
-      if (input) input.focus();
-    };
-
-    rec.onend = function () {
-      if (started && !receivedResult) {
-        out.textContent = getCurrentLanguage() === "en"
-          ? "Voice was not completed. You can type the command instead."
-          : "Ses tamamlanmadı. Komutu yazı olarak girebilirsin.";
-      }
-    };
-
-    rec.start();
-
-  } catch (error) {
-    out.textContent = getCurrentLanguage() === "en"
-      ? "Microphone could not start. Type your command."
-      : "Mikrofon başlatılamadı. Komutu yazı olarak gir.";
-    if (input) input.focus();
+    if (result.success) {
+      document.getElementById("voiceResult").textContent = result.response;
+    } else {
+      document.getElementById("voiceResult").textContent = `Error: ${result.error}`;
+    }
+  } catch (err) {
+    document.getElementById("voiceResult").textContent = `API Error: ${err.message}`;
   }
 }
 
+function speakText(text_to_speak) {
+  const utterance = new SpeechSynthesisUtterance(text_to_speak);
+  utterance.lang = getCurrentLanguage() === "en" ? "en-US" : "tr-TR";
+  window.speechSynthesis.speak(utterance);
+}
+
+// Initialize
 applyLanguage();
 panelGuncelle();
 </script>
