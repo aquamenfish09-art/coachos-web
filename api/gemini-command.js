@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { command, profile, targets } = req.body || {};
+    const { command, profile, targets, language } = req.body || {};
 
     if (!command) {
       return res.status(400).json({
@@ -22,21 +22,26 @@ export default async function handler(req, res) {
       });
     }
 
+    const outputLanguage = language === "en" ? "English" : "Turkish";
+
     const prompt = `
-Sen CoachOS uygulamasının sesli/yazılı komut motorusun.
+You are the voice/text command engine of the CoachOS app.
 
-Kullanıcının komutunu analiz et ve sadece JSON döndür.
+Analyze the user's command and return only valid JSON.
 
-Kullanıcı komutu:
+Response language:
+${outputLanguage}
+
+User command:
 "${command}"
 
-Kullanıcı profili:
+User profile:
 ${JSON.stringify(profile || {}, null, 2)}
 
-Hedefler:
+Targets:
 ${JSON.stringify(targets || {}, null, 2)}
 
-Uygulamadaki sayfalar:
+Available pages:
 - panel
 - profil
 - yemek
@@ -46,7 +51,7 @@ Uygulamadaki sayfalar:
 - motivasyon
 - rapor
 
-Desteklenen action değerleri:
+Supported action values:
 - open_page
 - create_workout
 - motivate
@@ -55,24 +60,24 @@ Desteklenen action değerleri:
 - profile
 - unknown
 
-Kurallar:
-- Sadece geçerli JSON döndür.
-- Açıklama yazma.
-- Kullanıcı selam verirse action "open_page", page "panel" olsun.
-- Kullanıcı spora gitmek istemiyorsa action "motivate" olsun.
-- Yemek, kalori, öğün, fotoğraf, yemek analizi diyorsa action "open_page", page "yemek" olsun.
-- Vücut, yağ oranı, form, fotoğraf, vücut analizi diyorsa action "open_page", page "vucut" olsun.
-- Hafıza, geçmiş, analizlerim diyorsa action "show_memory" olsun.
-- Antrenman, spor programı diyorsa action "create_workout" olsun.
-- Rapor, puan, günlük durum diyorsa action "show_report" olsun.
-- Profil, boy, kilo, yaş diyorsa action "open_page", page "profil" olsun.
-- message alanı kısa Türkçe cevap olsun.
+Rules:
+- Return only valid JSON.
+- Do not explain.
+- If the user greets, action "open_page", page "panel".
+- If the user says they do not want to train, action "motivate".
+- If the user mentions meal, food, calories, plate, photo, nutrition analysis, action "open_page", page "yemek".
+- If the user mentions body, body fat, physique, form, body photo, action "open_page", page "vucut".
+- If the user mentions memory, previous analyses, history, action "show_memory".
+- If the user mentions workout, training plan, gym program, action "create_workout".
+- If the user mentions report, score, daily status, action "show_report".
+- If the user mentions profile, height, weight, age, action "open_page", page "profil".
+- The message field must be in ${outputLanguage}.
 
-JSON formatı:
+JSON format:
 {
   "action": "open_page",
   "page": "panel",
-  "message": "Kısa Türkçe cevap"
+  "message": "Short response in selected language"
 }
 `;
 
@@ -123,7 +128,7 @@ JSON formatı:
       parsed = {
         action: "unknown",
         page: "panel",
-        message: raw || "Komut anlaşılamadı."
+        message: language === "en" ? "I could not understand the command." : "Komut anlaşılamadı."
       };
     }
 
