@@ -6,9 +6,7 @@
   <title>CoachOS</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -77,9 +75,7 @@
       margin: auto;
     }
 
-    section.active {
-      display: block;
-    }
+    section.active { display: block; }
 
     .card {
       background: #111827;
@@ -89,9 +85,7 @@
       margin-bottom: 14px;
     }
 
-    h2, h3 {
-      margin-top: 0;
-    }
+    h2, h3 { margin-top: 0; }
 
     input, select, textarea {
       width: 100%;
@@ -104,9 +98,7 @@
       font-size: 15px;
     }
 
-    textarea {
-      min-height: 90px;
-    }
+    textarea { min-height: 90px; }
 
     .btn {
       width: 100%;
@@ -191,6 +183,123 @@
       margin: 0 0 6px;
     }
 
+    .analysis-shell {
+      background: #020617;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid #334155;
+    }
+
+    .analysis-hero {
+      background: radial-gradient(circle at top left, rgba(34,197,94,.28), transparent 35%),
+                  linear-gradient(135deg, rgba(34,197,94,.18), rgba(56,189,248,.10));
+      padding: 16px;
+      border-bottom: 1px solid #334155;
+    }
+
+    .analysis-hero small {
+      display: inline-block;
+      color: #bbf7d0;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .analysis-hero h3 {
+      margin: 0;
+      font-size: 21px;
+      line-height: 1.2;
+    }
+
+    .analysis-hero p {
+      color: #cbd5e1;
+      margin: 8px 0 0;
+      line-height: 1.45;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      padding: 14px;
+    }
+
+    .metric-tile {
+      background: #111827;
+      border: 1px solid #253044;
+      border-radius: 16px;
+      padding: 13px;
+      min-height: 92px;
+    }
+
+    .metric-tile .label {
+      color: #94a3b8;
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .metric-tile .value {
+      color: #f8fafc;
+      font-size: 20px;
+      font-weight: 950;
+      line-height: 1.15;
+    }
+
+    .metric-tile.calorie .value { color: #22c55e; }
+    .metric-tile.protein .value { color: #38bdf8; }
+    .metric-tile.carbs .value { color: #fbbf24; }
+    .metric-tile.fat .value { color: #fb7185; }
+
+    .insight-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      padding: 0 14px 14px;
+    }
+
+    .insight-card {
+      background: #0f172a;
+      border: 1px solid #253044;
+      border-radius: 16px;
+      padding: 13px;
+    }
+
+    .insight-card strong {
+      display: block;
+      color: #22c55e;
+      margin-bottom: 6px;
+    }
+
+    .insight-card span {
+      color: #dbeafe;
+      line-height: 1.45;
+    }
+
+    .full-report {
+      margin: 0 14px 14px;
+      border-radius: 16px;
+      background: #020617;
+      border: 1px solid #253044;
+      overflow: hidden;
+    }
+
+    .full-report summary {
+      cursor: pointer;
+      padding: 13px;
+      font-weight: 900;
+      color: #38bdf8;
+    }
+
+    .full-report pre {
+      margin: 0;
+      padding: 13px;
+      white-space: pre-wrap;
+      color: #dbeafe;
+      line-height: 1.55;
+      border-top: 1px solid #253044;
+      font-family: Arial, sans-serif;
+    }
+
     @media(min-width: 850px) {
       .two {
         display: grid;
@@ -200,6 +309,14 @@
 
       .grid {
         grid-template-columns: repeat(4, 1fr);
+      }
+
+      .metric-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .insight-grid {
+        grid-template-columns: repeat(2, 1fr);
       }
     }
   </style>
@@ -244,19 +361,12 @@
 
   <div class="card">
     <h3 data-i18n="voiceTitle">Sesli / Yazılı Komut</h3>
-    <p class="small" data-i18n="voiceHint">
-      Örnek: “Yemek analizi aç”, “Hafızamı göster”, “Bugün spora gitmek istemiyorum”.
-    </p>
+    <p class="small" data-i18n="voiceHint">Örnek: “Yemek analizi aç”, “Hafızamı göster”, “Bugün spora gitmek istemiyorum”.</p>
 
     <button class="btn" onclick="startVoiceCommand()" data-i18n="speakBtn">🎙 Konuş</button>
-
     <textarea id="voiceText" data-placeholder="voicePlaceholder" placeholder="Ses algılanmazsa komutu buraya yaz."></textarea>
-
     <button class="btn secondary" onclick="sendTypedCommand()" data-i18n="sendCommand">Komutu Gönder</button>
-
-    <button class="btn secondary" onclick="speakText(document.getElementById('voiceResult').textContent)" data-i18n="speakAnswer">
-      🔊 Yanıtı Seslendir
-    </button>
+    <button class="btn secondary" onclick="speakText(document.getElementById('voiceResult').textContent)" data-i18n="speakAnswer">🔊 Yanıtı Seslendir</button>
 
     <div class="result" id="voiceResult" data-i18n="commandWaiting">Komut bekleniyor.</div>
   </div>
@@ -537,7 +647,13 @@ const LANG = {
     profileSaved: "Profil kaydedildi.",
     coachComment: "Koç yorumu",
     memoryMeal: "Yemek Analizi",
-    memoryBody: "Vücut Analizi"
+    memoryBody: "Vücut Analizi",
+    premiumTitle: "Öne Çıkan Analiz",
+    fullReport: "Tam raporu göster",
+    cuisine: "Mutfak",
+    mainRisk: "Ana Risk",
+    bestSide: "En İyi Taraf",
+    coachView: "Koç Yorumu"
   },
 
   en: {
@@ -616,7 +732,13 @@ const LANG = {
     profileSaved: "Profile saved.",
     coachComment: "Coach comment",
     memoryMeal: "Meal Analysis",
-    memoryBody: "Body Analysis"
+    memoryBody: "Body Analysis",
+    premiumTitle: "Analysis Highlights",
+    fullReport: "Show full report",
+    cuisine: "Cuisine",
+    mainRisk: "Main Risk",
+    bestSide: "Best Side",
+    coachView: "Coach Comment"
   }
 };
 
@@ -718,14 +840,7 @@ function hesapla() {
   const su = Math.round(kilo * 0.035 * 10) / 10;
   const adim = hedef === "fat_loss" || hedef === "fit" ? 9000 : 7500;
 
-  return {
-    kalori,
-    protein,
-    yag,
-    karbonhidrat,
-    su,
-    adim
-  };
+  return { kalori, protein, yag, karbonhidrat, su, adim };
 }
 
 function profilKaydet() {
@@ -912,6 +1027,157 @@ function escapeHtml(str) {
     .replaceAll("\n", "<br>");
 }
 
+function cleanLine(line) {
+  return String(line || "")
+    .replace(/^[-•\d.)\s]+/, "")
+    .trim();
+}
+
+function pickValue(raw, labels, fallback = "-") {
+  const lines = String(raw || "").split("\n");
+
+  for (const line of lines) {
+    const cleaned = cleanLine(line);
+    const lower = cleaned.toLocaleLowerCase("tr-TR");
+
+    for (const label of labels) {
+      const l = label.toLocaleLowerCase("tr-TR") + ":";
+      if (lower.startsWith(l)) {
+        const value = cleaned.slice(label.length + 1).trim();
+        return value || fallback;
+      }
+    }
+  }
+
+  return fallback;
+}
+
+function pickSectionBullet(raw, sectionWords, fallback = "-") {
+  const lines = String(raw || "").split("\n");
+  let active = false;
+
+  for (const line of lines) {
+    const cleaned = cleanLine(line);
+    const lower = cleaned.toLocaleLowerCase("tr-TR");
+
+    if (sectionWords.some(word => lower.includes(word.toLocaleLowerCase("tr-TR")))) {
+      active = true;
+      continue;
+    }
+
+    if (active && cleaned && !cleaned.includes(":")) {
+      return cleaned;
+    }
+
+    if (active && cleaned.startsWith("-")) {
+      return cleanLine(cleaned);
+    }
+  }
+
+  return fallback;
+}
+
+function renderAnalysisResult(targetId, rawText, type) {
+  const el = document.getElementById(targetId);
+  if (!el) return;
+
+  const raw = String(rawText || "");
+  const isEnglish = getCurrentLanguage() === "en";
+
+  if (type === "body") {
+    el.innerHTML = `
+      <div class="analysis-shell">
+        <div class="analysis-hero">
+          <small>${isEnglish ? "COACHOS BODY ENGINE" : "COACHOS VÜCUT MOTORU"}</small>
+          <h3>${isEnglish ? "Body Analysis Ready" : "Vücut Analizi Hazır"}</h3>
+          <p>${isEnglish ? "The report is structured below with full details." : "Rapor aşağıda düzenli şekilde hazırlandı."}</p>
+        </div>
+
+        <details class="full-report" open>
+          <summary>${t("fullReport")}</summary>
+          <pre>${escapeHtml(raw)}</pre>
+        </details>
+      </div>
+    `;
+    return;
+  }
+
+  const cuisine = pickValue(raw, ["Mutfak", "Cuisine"], "-");
+  const calories = pickValue(raw, ["Tahmini toplam", "Estimated total"], "-");
+  const protein = pickValue(raw, ["Tahmini protein", "Estimated protein"], "-");
+  const carbs = pickValue(raw, ["Tahmini karbonhidrat", "Estimated carbs"], "-");
+  const fat = pickValue(raw, ["Tahmini yağ", "Estimated fat"], "-");
+  const fiber = pickValue(raw, ["Tahmini lif", "Estimated fiber"], "-");
+  const waterScore = pickValue(raw, ["Skor", "Score"], "-");
+  const risk = pickSectionBullet(raw, ["Ana Risk", "Main Risk"], "-");
+  const best = pickSectionBullet(raw, ["En İyi Taraf", "Best Side"], "-");
+  const coach = pickSectionBullet(raw, ["Koç Yorumu", "Coach Comment"], "-");
+
+  el.innerHTML = `
+    <div class="analysis-shell">
+      <div class="analysis-hero">
+        <small>${isEnglish ? "COACHOS WORLD CUISINE ENGINE" : "COACHOS DÜNYA MUTFAĞI MOTORU"}</small>
+        <h3>${isEnglish ? "Meal Analysis Ready" : "Yemek Analizi Hazır"}</h3>
+        <p>${t("cuisine")}: <strong>${escapeHtml(cuisine)}</strong></p>
+      </div>
+
+      <div class="metric-grid">
+        <div class="metric-tile calorie">
+          <div class="label">🔥 ${t("calorie")}</div>
+          <div class="value">${escapeHtml(calories)}</div>
+        </div>
+
+        <div class="metric-tile protein">
+          <div class="label">💪 ${t("protein")}</div>
+          <div class="value">${escapeHtml(protein)}</div>
+        </div>
+
+        <div class="metric-tile carbs">
+          <div class="label">🍚 ${isEnglish ? "Carbs" : "Karbonhidrat"}</div>
+          <div class="value">${escapeHtml(carbs)}</div>
+        </div>
+
+        <div class="metric-tile fat">
+          <div class="label">🟡 ${isEnglish ? "Fat" : "Yağ"}</div>
+          <div class="value">${escapeHtml(fat)}</div>
+        </div>
+
+        <div class="metric-tile">
+          <div class="label">🌿 ${isEnglish ? "Fiber" : "Lif"}</div>
+          <div class="value">${escapeHtml(fiber)}</div>
+        </div>
+
+        <div class="metric-tile">
+          <div class="label">💧 ${isEnglish ? "Water Ratio" : "Su Oranı"}</div>
+          <div class="value">${escapeHtml(waterScore)}</div>
+        </div>
+      </div>
+
+      <div class="insight-grid">
+        <div class="insight-card">
+          <strong>🚨 ${t("mainRisk")}</strong>
+          <span>${escapeHtml(risk)}</span>
+        </div>
+
+        <div class="insight-card">
+          <strong>✅ ${t("bestSide")}</strong>
+          <span>${escapeHtml(best)}</span>
+        </div>
+
+        <div class="insight-card">
+          <strong>🎯 ${t("coachView")}</strong>
+          <span>${escapeHtml(coach)}</span>
+        </div>
+      </div>
+
+      <details class="full-report">
+        <summary>${t("fullReport")}</summary>
+        <pre>${escapeHtml(raw)}</pre>
+      </details>
+    </div>
+  `;
+}
+
 function hafizaGoster() {
   const memory = JSON.parse(localStorage.getItem("coachos_visual_memory") || "[]");
   const c = document.getElementById("hafizaListesi");
@@ -980,7 +1246,7 @@ async function yemekAnaliz() {
       return;
     }
 
-    out.textContent = data.result;
+    renderAnalysisResult("yemekSonuc", data.result, "meal");
     hafizayaKaydet("meal", data.result, note);
 
   } catch (e) {
@@ -1025,7 +1291,7 @@ async function vucutAnaliz() {
       return;
     }
 
-    out.textContent = data.result;
+    renderAnalysisResult("vucutSonuc", data.result, "body");
     hafizayaKaydet("body", data.result, note);
 
   } catch (e) {
@@ -1184,7 +1450,6 @@ Yarın için net görev:
 
 function speakText(message) {
   if (!message || !message.trim()) return;
-
   if (!window.speechSynthesis) return;
 
   window.speechSynthesis.cancel();
@@ -1353,7 +1618,7 @@ function startVoiceCommand() {
       sendCommandToGemini(command);
     };
 
-    rec.onerror = function (event) {
+    rec.onerror = function () {
       out.textContent = getCurrentLanguage() === "en"
         ? "Voice could not be detected. Type the command instead."
         : "Ses algılanamadı. Komutu yazı olarak da girebilirsin.";
