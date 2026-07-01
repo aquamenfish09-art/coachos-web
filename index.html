@@ -17,12 +17,30 @@
       color: white;
     }
 
-    header {
-      padding: 20px;
+    .app-header {
+      padding: 18px 16px;
       background: linear-gradient(135deg, #22c55e, #38bdf8);
       color: #06131e;
-      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .app-title {
+      font-size: 23px;
       font-weight: 900;
+    }
+
+    #languageSelect {
+      width: auto;
+      min-width: 130px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.4);
+      background: #020617;
+      color: white;
+      font-weight: 800;
     }
 
     nav {
@@ -33,7 +51,7 @@
       background: #0f172a;
       position: sticky;
       top: 0;
-      z-index: 5;
+      z-index: 10;
     }
 
     nav button {
@@ -55,7 +73,7 @@
     section {
       display: none;
       padding: 15px;
-      max-width: 900px;
+      max-width: 1100px;
       margin: auto;
     }
 
@@ -120,7 +138,7 @@
       border: 1px solid #334155;
       border-radius: 14px;
       padding: 14px;
-      line-height: 1.5;
+      line-height: 1.55;
       color: #dbeafe;
       overflow-wrap: break-word;
     }
@@ -173,7 +191,7 @@
       margin: 0 0 6px;
     }
 
-    @media(min-width:800px) {
+    @media(min-width: 850px) {
       .two {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -189,134 +207,139 @@
 
 <body>
 
-<header>CoachOS - AI Fitness Koçu</header>
+<header class="app-header">
+  <div class="app-title" data-i18n="appTitle">CoachOS - AI Fitness Koçu</div>
+
+  <select id="languageSelect" onchange="setLanguage(this.value)">
+    <option value="tr">🇹🇷 Türkçe</option>
+    <option value="en">🇺🇸 English</option>
+  </select>
+</header>
 
 <nav>
-  <button class="active" onclick="showPage('panel', this)">Panel</button>
-  <button onclick="showPage('profil', this)">Profil</button>
-  <button onclick="showPage('yemek', this)">Yemek</button>
-  <button onclick="showPage('vucut', this)">Vücut</button>
-  <button onclick="showPage('hafiza', this)">Hafıza</button>
-  <button onclick="showPage('antrenman', this)">Antrenman</button>
-  <button onclick="showPage('motivasyon', this)">Motivasyon</button>
-  <button onclick="showPage('rapor', this)">Rapor</button>
+  <button class="active" onclick="showPage('panel', this)" data-i18n="panel">Panel</button>
+  <button onclick="showPage('profil', this)" data-i18n="profil">Profil</button>
+  <button onclick="showPage('yemek', this)" data-i18n="yemek">Yemek</button>
+  <button onclick="showPage('vucut', this)" data-i18n="vucut">Vücut</button>
+  <button onclick="showPage('hafiza', this)" data-i18n="hafiza">Hafıza</button>
+  <button onclick="showPage('antrenman', this)" data-i18n="antrenman">Antrenman</button>
+  <button onclick="showPage('motivasyon', this)" data-i18n="motivasyon">Motivasyon</button>
+  <button onclick="showPage('rapor', this)" data-i18n="rapor">Rapor</button>
 </nav>
 
 <section id="panel" class="active">
   <div class="card">
-    <h2>Motivasyon biter, sistem devam eder.</h2>
-    <p class="small">
+    <h2 data-i18n="panelHeroTitle">Motivasyon biter, sistem devam eder.</h2>
+    <p class="small" data-i18n="panelHeroText">
       Profilini kur. CoachOS sana kalori, makro, görsel analiz, hafıza, antrenman ve günlük görev çıkarır.
     </p>
   </div>
 
   <div class="grid">
-    <div class="stat">Kalori <b id="pKalori">-</b></div>
-    <div class="stat">Protein <b id="pProtein">-</b></div>
-    <div class="stat">Su <b id="pSu">-</b></div>
-    <div class="stat">Adım <b id="pAdim">-</b></div>
+    <div class="stat"><span data-i18n="calorie">Kalori</span> <b id="pKalori">-</b></div>
+    <div class="stat"><span data-i18n="protein">Protein</span> <b id="pProtein">-</b></div>
+    <div class="stat"><span data-i18n="water">Su</span> <b id="pSu">-</b></div>
+    <div class="stat"><span data-i18n="steps">Adım</span> <b id="pAdim">-</b></div>
   </div>
 
   <div class="card">
-    <h3>Sesli / Yazılı Komut</h3>
-    <p class="small">
+    <h3 data-i18n="voiceTitle">Sesli / Yazılı Komut</h3>
+    <p class="small" data-i18n="voiceHint">
       Örnek: “Yemek analizi aç”, “Hafızamı göster”, “Bugün spora gitmek istemiyorum”.
     </p>
 
-    <button class="btn" onclick="startVoiceCommand()">🎙 Konuş</button>
+    <button class="btn" onclick="startVoiceCommand()" data-i18n="speakBtn">🎙 Konuş</button>
 
-    <textarea id="voiceText" placeholder="Ses algılanmazsa komutu buraya yaz."></textarea>
+    <textarea id="voiceText" data-placeholder="voicePlaceholder" placeholder="Ses algılanmazsa komutu buraya yaz."></textarea>
 
-    <button class="btn secondary" onclick="sendTypedCommand()">Komutu Gönder</button>
+    <button class="btn secondary" onclick="sendTypedCommand()" data-i18n="sendCommand">Komutu Gönder</button>
 
-    <button class="btn secondary" onclick="speakText(document.getElementById('voiceResult').textContent)">
+    <button class="btn secondary" onclick="speakText(document.getElementById('voiceResult').textContent)" data-i18n="speakAnswer">
       🔊 Yanıtı Seslendir
     </button>
 
-    <div class="result" id="voiceResult">Komut bekleniyor.</div>
+    <div class="result" id="voiceResult" data-i18n="commandWaiting">Komut bekleniyor.</div>
   </div>
 
   <div class="card">
-    <h3>Bugünün Görevi</h3>
+    <h3 data-i18n="todayTask">Bugünün Görevi</h3>
     <div class="result" id="gorev">Önce profilini kur dostum.</div>
   </div>
 
   <div class="card">
-    <h3>Görsel Hafıza Özeti</h3>
+    <h3 data-i18n="memorySummaryTitle">Görsel Hafıza Özeti</h3>
     <div class="result" id="memorySummary">Henüz görsel analiz yok.</div>
   </div>
 </section>
 
 <section id="profil">
   <div class="card">
-    <h2>Profil Kur</h2>
+    <h2 data-i18n="profileSetup">Profil Kur</h2>
 
-    <label>Yaş</label>
+    <label data-i18n="age">Yaş</label>
     <input id="yas" type="number" placeholder="18">
 
-    <label>Boy cm</label>
+    <label data-i18n="height">Boy cm</label>
     <input id="boy" type="number" placeholder="175">
 
-    <label>Kilo kg</label>
+    <label data-i18n="weight">Kilo kg</label>
     <input id="kilo" type="number" placeholder="95">
 
-    <label>Cinsiyet</label>
+    <label data-i18n="sex">Cinsiyet</label>
     <select id="cinsiyet">
-      <option>Erkek</option>
-      <option>Kadın</option>
+      <option value="male">Erkek / Male</option>
+      <option value="female">Kadın / Female</option>
     </select>
 
-    <label>Hedef</label>
+    <label data-i18n="goal">Hedef</label>
     <select id="hedef">
-      <option>Yağ yakımı + kas koruma</option>
-      <option>Fit</option>
-      <option>Atletik</option>
-      <option>Kaslı</option>
-      <option>Kilo alma / kas kazanma</option>
+      <option value="fat_loss">Yağ yakımı + kas koruma / Fat loss + muscle retention</option>
+      <option value="fit">Fit</option>
+      <option value="athletic">Atletik / Athletic</option>
+      <option value="muscle_gain">Kaslı / Muscle gain</option>
+      <option value="weight_gain">Kilo alma / Weight gain</option>
     </select>
 
-    <label>Günlük tempo</label>
+    <label data-i18n="dailyTempo">Günlük tempo</label>
     <select id="tempo">
-      <option>Az</option>
-      <option selected>Orta</option>
-      <option>Yoğun</option>
-      <option>Çok aktif</option>
+      <option value="low">Az / Low</option>
+      <option value="medium" selected>Orta / Medium</option>
+      <option value="high">Yoğun / High</option>
+      <option value="very_high">Çok aktif / Very active</option>
     </select>
 
-    <label>Haftada kaç gün spor?</label>
+    <label data-i18n="trainingDays">Haftada kaç gün spor?</label>
     <input id="sporGun" type="number" placeholder="4">
 
-    <button class="btn" onclick="profilKaydet()">Profili Kaydet</button>
+    <button class="btn" onclick="profilKaydet()" data-i18n="saveProfile">Profili Kaydet</button>
   </div>
 
   <div class="card">
-    <h3>Sonuç</h3>
-    <div class="result" id="profilSonuc">Bilgileri girip kaydet.</div>
+    <h3 data-i18n="resultTitle">Sonuç</h3>
+    <div class="result" id="profilSonuc" data-i18n="profileEmpty">Bilgileri girip kaydet.</div>
   </div>
 </section>
 
 <section id="yemek">
   <div class="two">
     <div class="card">
-      <h2>Yemek Görsel Analizi</h2>
-      <p class="small">
-        Yemek fotoğrafı seç. Analiz sonucu otomatik hafızaya kaydedilir.
-      </p>
+      <h2 data-i18n="mealTitle">Yemek Görsel Analizi</h2>
+      <p class="small" data-i18n="mealHint">Yemek fotoğrafı seç. Analiz sonucu otomatik hafızaya kaydedilir.</p>
 
-      <label>Yemek fotoğrafı</label>
+      <label data-i18n="mealPhoto">Yemek fotoğrafı</label>
       <input type="file" id="mealImage" accept="image/*" onchange="previewImage(event, 'mealPreview')">
 
       <img id="mealPreview" class="preview">
 
-      <label>İsteğe bağlı not</label>
-      <textarea id="yemekText" placeholder="Örnek: tavuk, pilav, yoğurt"></textarea>
+      <label data-i18n="optionalNote">İsteğe bağlı not</label>
+      <textarea id="yemekText" data-placeholder="mealPlaceholder" placeholder="Örnek: tavuk, pilav, yoğurt"></textarea>
 
-      <button class="btn" onclick="yemekAnaliz()">Yemeği Analiz Et</button>
+      <button class="btn" onclick="yemekAnaliz()" data-i18n="analyzeMeal">Yemeği Analiz Et</button>
     </div>
 
     <div class="card">
-      <h3>Analiz Sonucu</h3>
-      <div class="result" id="yemekSonuc">Yemek fotoğrafı seç.</div>
+      <h3 data-i18n="analysisResult">Analiz Sonucu</h3>
+      <div class="result" id="yemekSonuc" data-i18n="mealEmpty">Yemek fotoğrafı seç.</div>
     </div>
   </div>
 </section>
@@ -324,123 +347,310 @@
 <section id="vucut">
   <div class="two">
     <div class="card">
-      <h2>Vücut Görsel Analizi</h2>
-      <p class="small">
-        Fitness odaklı tahmini analiz ve 90 günlük strateji çıkarır.
-      </p>
+      <h2 data-i18n="bodyTitle">Vücut Görsel Analizi</h2>
+      <p class="small" data-i18n="bodyHint">Fitness odaklı tahmini analiz ve 90 günlük strateji çıkarır.</p>
 
-      <label>Vücut fotoğrafı</label>
+      <label data-i18n="bodyPhoto">Vücut fotoğrafı</label>
       <input type="file" id="bodyImage" accept="image/*" onchange="previewImage(event, 'bodyPreview')">
 
       <img id="bodyPreview" class="preview">
 
-      <label>İsteğe bağlı not</label>
-      <textarea id="vucutText" placeholder="Örnek: göbek-bel var, omuzlar iyi..."></textarea>
+      <label data-i18n="optionalNote">İsteğe bağlı not</label>
+      <textarea id="vucutText" data-placeholder="bodyPlaceholder" placeholder="Örnek: göbek-bel var, omuzlar iyi..."></textarea>
 
-      <button class="btn" onclick="vucutAnaliz()">Vücudu Analiz Et</button>
+      <button class="btn" onclick="vucutAnaliz()" data-i18n="analyzeBody">Vücudu Analiz Et</button>
     </div>
 
     <div class="card">
-      <h3>Analiz Sonucu</h3>
-      <div class="result" id="vucutSonuc">Vücut fotoğrafı seç.</div>
+      <h3 data-i18n="analysisResult">Analiz Sonucu</h3>
+      <div class="result" id="vucutSonuc" data-i18n="bodyEmpty">Vücut fotoğrafı seç.</div>
     </div>
   </div>
 </section>
 
 <section id="hafiza">
   <div class="card">
-    <h2>Görsel Hafıza</h2>
-    <p class="small">
-      Yemek ve vücut analiz geçmişin burada tutulur.
-    </p>
+    <h2 data-i18n="visualMemory">Görsel Hafıza</h2>
+    <p class="small" data-i18n="memoryHint">Yemek ve vücut analiz geçmişin burada tutulur.</p>
 
-    <button class="btn secondary" onclick="hafizaGoster()">Yenile</button>
-    <button class="btn danger" onclick="hafizaTemizle()">Hafızayı Temizle</button>
+    <button class="btn secondary" onclick="hafizaGoster()" data-i18n="refresh">Yenile</button>
+    <button class="btn danger" onclick="hafizaTemizle()" data-i18n="clearMemory">Hafızayı Temizle</button>
   </div>
 
   <div class="card">
-    <div id="hafizaListesi" class="result">Henüz kayıt yok.</div>
+    <div id="hafizaListesi" class="result" data-i18n="noMemory">Henüz kayıt yok.</div>
   </div>
 </section>
 
 <section id="antrenman">
   <div class="card">
-    <h2>Antrenman</h2>
-    <button class="btn" onclick="antrenmanOlustur()">Program Oluştur</button>
+    <h2 data-i18n="workout">Antrenman</h2>
+    <button class="btn" onclick="antrenmanOlustur()" data-i18n="createWorkout">Program Oluştur</button>
   </div>
 
   <div class="card">
-    <div class="result" id="antrenmanSonuc">Butona bas.</div>
+    <div class="result" id="antrenmanSonuc" data-i18n="pressButton">Butona bas.</div>
   </div>
 </section>
 
 <section id="motivasyon">
   <div class="card">
-    <h2>Motivasyon + Disiplin</h2>
-    <textarea id="modText" placeholder="Bugün spora gitmek istemiyorum..."></textarea>
-    <button class="btn" onclick="motivasyonVer()">Koç Cevabı</button>
+    <h2 data-i18n="motivationDiscipline">Motivasyon + Disiplin</h2>
+    <textarea id="modText" data-placeholder="motivationPlaceholder" placeholder="Bugün spora gitmek istemiyorum..."></textarea>
+    <button class="btn" onclick="motivasyonVer()" data-i18n="coachAnswer">Koç Cevabı</button>
   </div>
 
   <div class="card">
-    <div class="result" id="motivasyonSonuc">Modunu yaz.</div>
+    <div class="result" id="motivasyonSonuc" data-i18n="writeMood">Modunu yaz.</div>
   </div>
 </section>
 
 <section id="rapor">
   <div class="card">
-    <h2>Günlük Rapor</h2>
+    <h2 data-i18n="dailyReport">Günlük Rapor</h2>
 
-    <label>Protein</label>
+    <label data-i18n="protein">Protein</label>
     <select id="rProtein">
-      <option value="25">Tamam</option>
-      <option value="13">Kısmen</option>
-      <option value="0">Olmadı</option>
+      <option value="25">Tamam / Done</option>
+      <option value="13">Kısmen / Partial</option>
+      <option value="0">Olmadı / Missed</option>
     </select>
 
-    <label>Antrenman</label>
+    <label data-i18n="workout">Antrenman</label>
     <select id="rAntrenman">
-      <option value="25">Yaptım</option>
-      <option value="13">Minimum görev</option>
-      <option value="0">Yapmadım</option>
+      <option value="25">Yaptım / Done</option>
+      <option value="13">Minimum görev / Minimum task</option>
+      <option value="0">Yapmadım / Missed</option>
     </select>
 
-    <label>Kalori</label>
+    <label data-i18n="calorie">Kalori</label>
     <select id="rKalori">
-      <option value="20">İyi</option>
-      <option value="10">Orta</option>
-      <option value="0">Dağıldı</option>
+      <option value="20">İyi / Good</option>
+      <option value="10">Orta / Medium</option>
+      <option value="0">Dağıldı / Bad</option>
     </select>
 
-    <label>Su</label>
+    <label data-i18n="water">Su</label>
     <select id="rSu">
-      <option value="10">Tam</option>
-      <option value="5">Eksik</option>
-      <option value="0">Çok az</option>
+      <option value="10">Tam / Full</option>
+      <option value="5">Eksik / Low</option>
+      <option value="0">Çok az / Very low</option>
     </select>
 
-    <label>Adım</label>
+    <label data-i18n="steps">Adım</label>
     <select id="rAdim">
-      <option value="10">Tam</option>
-      <option value="5">Eksik</option>
-      <option value="0">Çok az</option>
+      <option value="10">Tam / Full</option>
+      <option value="5">Eksik / Low</option>
+      <option value="0">Çok az / Very low</option>
     </select>
 
-    <label>Uyku</label>
+    <label data-i18n="sleep">Uyku</label>
     <select id="rUyku">
-      <option value="10">İyi</option>
-      <option value="5">Orta</option>
-      <option value="0">Kötü</option>
+      <option value="10">İyi / Good</option>
+      <option value="5">Orta / Medium</option>
+      <option value="0">Kötü / Bad</option>
     </select>
 
-    <button class="btn" onclick="raporOlustur()">Rapor Oluştur</button>
+    <button class="btn" onclick="raporOlustur()" data-i18n="createReport">Rapor Oluştur</button>
   </div>
 
   <div class="card">
-    <div class="result" id="raporSonuc">Rapor burada çıkar.</div>
+    <div class="result" id="raporSonuc" data-i18n="reportEmpty">Rapor burada çıkar.</div>
   </div>
 </section>
 
 <script>
+const LANG = {
+  tr: {
+    appTitle: "CoachOS - AI Fitness Koçu",
+    panel: "Panel",
+    profil: "Profil",
+    yemek: "Yemek",
+    vucut: "Vücut",
+    hafiza: "Hafıza",
+    antrenman: "Antrenman",
+    motivasyon: "Motivasyon",
+    rapor: "Rapor",
+    calorie: "Kalori",
+    protein: "Protein",
+    water: "Su",
+    steps: "Adım",
+    sleep: "Uyku",
+    workout: "Antrenman",
+    panelHeroTitle: "Motivasyon biter, sistem devam eder.",
+    panelHeroText: "Profilini kur. CoachOS sana kalori, makro, görsel analiz, hafıza, antrenman ve günlük görev çıkarır.",
+    voiceTitle: "Sesli / Yazılı Komut",
+    voiceHint: "Örnek: “Yemek analizi aç”, “Hafızamı göster”, “Bugün spora gitmek istemiyorum”.",
+    voicePlaceholder: "Ses algılanmazsa komutu buraya yaz.",
+    speakBtn: "🎙 Konuş",
+    sendCommand: "Komutu Gönder",
+    speakAnswer: "🔊 Yanıtı Seslendir",
+    commandWaiting: "Komut bekleniyor.",
+    todayTask: "Bugünün Görevi",
+    memorySummaryTitle: "Görsel Hafıza Özeti",
+    profileSetup: "Profil Kur",
+    age: "Yaş",
+    height: "Boy cm",
+    weight: "Kilo kg",
+    sex: "Cinsiyet",
+    goal: "Hedef",
+    dailyTempo: "Günlük tempo",
+    trainingDays: "Haftada kaç gün spor?",
+    saveProfile: "Profili Kaydet",
+    resultTitle: "Sonuç",
+    profileEmpty: "Bilgileri girip kaydet.",
+    mealTitle: "Yemek Görsel Analizi",
+    mealHint: "Yemek fotoğrafı seç. Analiz sonucu otomatik hafızaya kaydedilir.",
+    mealPhoto: "Yemek fotoğrafı",
+    optionalNote: "İsteğe bağlı not",
+    mealPlaceholder: "Örnek: tavuk, pilav, yoğurt",
+    analyzeMeal: "Yemeği Analiz Et",
+    analysisResult: "Analiz Sonucu",
+    mealEmpty: "Yemek fotoğrafı seç.",
+    bodyTitle: "Vücut Görsel Analizi",
+    bodyHint: "Fitness odaklı tahmini analiz ve 90 günlük strateji çıkarır.",
+    bodyPhoto: "Vücut fotoğrafı",
+    bodyPlaceholder: "Örnek: göbek-bel var, omuzlar iyi...",
+    analyzeBody: "Vücudu Analiz Et",
+    bodyEmpty: "Vücut fotoğrafı seç.",
+    visualMemory: "Görsel Hafıza",
+    memoryHint: "Yemek ve vücut analiz geçmişin burada tutulur.",
+    refresh: "Yenile",
+    clearMemory: "Hafızayı Temizle",
+    noMemory: "Henüz kayıt yok.",
+    createWorkout: "Program Oluştur",
+    pressButton: "Butona bas.",
+    motivationDiscipline: "Motivasyon + Disiplin",
+    motivationPlaceholder: "Bugün spora gitmek istemiyorum...",
+    coachAnswer: "Koç Cevabı",
+    writeMood: "Modunu yaz.",
+    dailyReport: "Günlük Rapor",
+    createReport: "Rapor Oluştur",
+    reportEmpty: "Rapor burada çıkar.",
+    photoPreparing: "Fotoğraf hazırlanıyor...",
+    mealAnalyzing: "Yemek fotoğrafı analiz ediliyor...",
+    bodyAnalyzing: "Vücut fotoğrafı analiz ediliyor...",
+    selectMealPhoto: "Önce bir yemek fotoğrafı seç dostum.",
+    selectBodyPhoto: "Önce bir vücut fotoğrafı seç dostum.",
+    analysisError: "Analiz hatası:",
+    apiError: "Hata:",
+    profileSaved: "Profil kaydedildi.",
+    coachComment: "Koç yorumu",
+    memoryMeal: "Yemek Analizi",
+    memoryBody: "Vücut Analizi"
+  },
+
+  en: {
+    appTitle: "CoachOS - AI Fitness Coach",
+    panel: "Dashboard",
+    profil: "Profile",
+    yemek: "Meal",
+    vucut: "Body",
+    hafiza: "Memory",
+    antrenman: "Workout",
+    motivasyon: "Motivation",
+    rapor: "Report",
+    calorie: "Calories",
+    protein: "Protein",
+    water: "Water",
+    steps: "Steps",
+    sleep: "Sleep",
+    workout: "Workout",
+    panelHeroTitle: "Motivation ends. The system continues.",
+    panelHeroText: "Set up your profile. CoachOS creates calories, macros, visual analysis, memory, workouts and daily tasks.",
+    voiceTitle: "Voice / Text Command",
+    voiceHint: "Examples: “Open meal analysis”, “Show my memory”, “I don’t want to train today”.",
+    voicePlaceholder: "If voice is not detected, type your command here.",
+    speakBtn: "🎙 Speak",
+    sendCommand: "Send Command",
+    speakAnswer: "🔊 Speak Answer",
+    commandWaiting: "Waiting for command.",
+    todayTask: "Today's Task",
+    memorySummaryTitle: "Visual Memory Summary",
+    profileSetup: "Profile Setup",
+    age: "Age",
+    height: "Height cm",
+    weight: "Weight kg",
+    sex: "Sex",
+    goal: "Goal",
+    dailyTempo: "Daily activity",
+    trainingDays: "Training days per week",
+    saveProfile: "Save Profile",
+    resultTitle: "Result",
+    profileEmpty: "Enter your information and save.",
+    mealTitle: "Meal Image Analysis",
+    mealHint: "Choose a meal photo. The analysis will be saved to memory automatically.",
+    mealPhoto: "Meal photo",
+    optionalNote: "Optional note",
+    mealPlaceholder: "Example: chicken, rice, yogurt",
+    analyzeMeal: "Analyze Meal",
+    analysisResult: "Analysis Result",
+    mealEmpty: "Choose a meal photo.",
+    bodyTitle: "Body Image Analysis",
+    bodyHint: "Creates an estimated fitness analysis and a 90-day strategy.",
+    bodyPhoto: "Body photo",
+    bodyPlaceholder: "Example: belly/waist fat, strong shoulders...",
+    analyzeBody: "Analyze Body",
+    bodyEmpty: "Choose a body photo.",
+    visualMemory: "Visual Memory",
+    memoryHint: "Your meal and body analysis history is stored here.",
+    refresh: "Refresh",
+    clearMemory: "Clear Memory",
+    noMemory: "No records yet.",
+    createWorkout: "Create Program",
+    pressButton: "Press the button.",
+    motivationDiscipline: "Motivation + Discipline",
+    motivationPlaceholder: "I don’t want to train today...",
+    coachAnswer: "Coach Answer",
+    writeMood: "Write your mood.",
+    dailyReport: "Daily Report",
+    createReport: "Create Report",
+    reportEmpty: "Your report will appear here.",
+    photoPreparing: "Preparing photo...",
+    mealAnalyzing: "Analyzing meal photo...",
+    bodyAnalyzing: "Analyzing body photo...",
+    selectMealPhoto: "Choose a meal photo first.",
+    selectBodyPhoto: "Choose a body photo first.",
+    analysisError: "Analysis error:",
+    apiError: "Error:",
+    profileSaved: "Profile saved.",
+    coachComment: "Coach comment",
+    memoryMeal: "Meal Analysis",
+    memoryBody: "Body Analysis"
+  }
+};
+
+function getCurrentLanguage() {
+  return localStorage.getItem("coachos_lang") || "tr";
+}
+
+function setLanguage(lang) {
+  localStorage.setItem("coachos_lang", lang);
+  applyLanguage();
+  panelGuncelle();
+}
+
+function t(key) {
+  const lang = getCurrentLanguage();
+  return LANG[lang]?.[key] || LANG.tr[key] || key;
+}
+
+function applyLanguage() {
+  const lang = getCurrentLanguage();
+  const selector = document.getElementById("languageSelect");
+  if (selector) selector.value = lang;
+
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.getAttribute("data-i18n");
+    el.textContent = t(key);
+  });
+
+  document.querySelectorAll("[data-placeholder]").forEach(el => {
+    const key = el.getAttribute("data-placeholder");
+    el.placeholder = t(key);
+  });
+}
+
 function showPage(id, btn) {
   document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
@@ -480,33 +690,33 @@ function hesapla() {
   const yas = val("yas", 18);
   const boy = val("boy", 175);
   const kilo = val("kilo", 95);
-  const cinsiyet = text("cinsiyet").toLowerCase();
-  const hedef = text("hedef").toLowerCase();
-  const tempo = text("tempo").toLowerCase();
+  const cinsiyet = text("cinsiyet");
+  const hedef = text("hedef");
+  const tempo = text("tempo");
 
-  let bmr = cinsiyet.includes("erkek")
+  let bmr = cinsiyet === "male"
     ? 10 * kilo + 6.25 * boy - 5 * yas + 5
     : 10 * kilo + 6.25 * boy - 5 * yas - 161;
 
   let carp = 1.45;
 
-  if (tempo.includes("az")) carp = 1.35;
-  if (tempo.includes("orta")) carp = 1.55;
-  if (tempo.includes("yoğun") || tempo.includes("çok")) carp = 1.7;
+  if (tempo === "low") carp = 1.35;
+  if (tempo === "medium") carp = 1.55;
+  if (tempo === "high" || tempo === "very_high") carp = 1.7;
 
   let kalori = Math.round(bmr * carp - 450);
 
-  if (hedef.includes("kilo alma")) {
+  if (hedef === "weight_gain") {
     kalori = Math.round(bmr * carp + 250);
   }
 
-  kalori = Math.max(kalori, cinsiyet.includes("erkek") ? 1700 : 1400);
+  kalori = Math.max(kalori, cinsiyet === "male" ? 1700 : 1400);
 
   const protein = Math.round(kilo * 1.8);
   const yag = Math.round(kilo * 0.8);
   const karbonhidrat = Math.max(Math.round((kalori - protein * 4 - yag * 9) / 4), 80);
   const su = Math.round(kilo * 0.035 * 10) / 10;
-  const adim = hedef.includes("yağ") || hedef.includes("fit") ? 9000 : 7500;
+  const adim = hedef === "fat_loss" || hedef === "fit" ? 9000 : 7500;
 
   return {
     kalori,
@@ -520,11 +730,24 @@ function hesapla() {
 
 function profilKaydet() {
   const h = hesapla();
-
   localStorage.setItem("coachos", JSON.stringify(h));
 
-  document.getElementById("profilSonuc").textContent =
-`Profil kaydedildi.
+  if (getCurrentLanguage() === "en") {
+    document.getElementById("profilSonuc").textContent =
+`${t("profileSaved")}
+
+Calories: ${h.kalori} kcal
+Protein: ${h.protein} g
+Carbs: ${h.karbonhidrat} g
+Fat: ${h.yag} g
+Water: ${h.su} L
+Steps: ${h.adim}
+
+${t("coachComment")}:
+High protein, controlled calories and consistent strength training.`;
+  } else {
+    document.getElementById("profilSonuc").textContent =
+`${t("profileSaved")}
 
 Kalori: ${h.kalori} kcal
 Protein: ${h.protein} g
@@ -533,8 +756,9 @@ Yağ: ${h.yag} g
 Su: ${h.su} litre
 Adım: ${h.adim}
 
-Koç yorumu:
+${t("coachComment")}:
 Yüksek protein, kontrollü kalori ve düzenli ağırlık antrenmanı.`;
+  }
 
   panelGuncelle();
   goPage("panel");
@@ -548,24 +772,37 @@ function panelGuncelle() {
   document.getElementById("pSu").textContent = h.su ? h.su + "L" : "-";
   document.getElementById("pAdim").textContent = h.adim || "-";
 
-  document.getElementById("gorev").textContent = h.kalori ?
+  const task = document.getElementById("gorev");
+
+  if (!h.kalori) {
+    task.textContent = getCurrentLanguage() === "en"
+      ? "Set up your profile first."
+      : "Önce profilini kur dostum.";
+  } else if (getCurrentLanguage() === "en") {
+    task.textContent =
+`Today's task:
+1) Get close to ${h.protein} g protein.
+2) Finish ${h.su} L water.
+3) Complete ${h.adim} steps.
+4) Do not break the chain.`;
+  } else {
+    task.textContent =
 `Bugünün görevi:
 1) ${h.protein} g proteine yaklaş.
 2) ${h.su} litre suyu bitir.
 3) ${h.adim} adım hedefini tamamla.
-4) Zinciri kırma.` :
-"Önce profilini kur dostum.";
+4) Zinciri kırma.`;
+  }
 
   const memory = JSON.parse(localStorage.getItem("coachos_visual_memory") || "[]");
   const meal = memory.filter(x => x.type === "meal").length;
   const body = memory.filter(x => x.type === "body").length;
 
-  document.getElementById("memorySummary").textContent = memory.length ?
-`Toplam ${memory.length} analiz var.
-Yemek: ${meal}
-Vücut: ${body}
-Son kayıt: ${memory[0].date}` :
-"Henüz görsel analiz yok.";
+  document.getElementById("memorySummary").textContent = memory.length
+    ? getCurrentLanguage() === "en"
+      ? `Total ${memory.length} analyses.\nMeal: ${meal}\nBody: ${body}\nLast record: ${memory[0].date}`
+      : `Toplam ${memory.length} analiz var.\nYemek: ${meal}\nVücut: ${body}\nSon kayıt: ${memory[0].date}`
+    : t("noMemory");
 }
 
 function previewImage(event, id) {
@@ -585,55 +822,66 @@ function imageFileToJpegDataUrl(file, maxSize = 1200, quality = 0.82) {
       return;
     }
 
-    const objectUrl = URL.createObjectURL(file);
-    const img = new Image();
+    const reader = new FileReader();
 
-    img.onload = function () {
-      let width = img.naturalWidth || img.width;
-      let height = img.naturalHeight || img.height;
+    reader.onload = function () {
+      const originalDataUrl = reader.result;
 
-      if (!width || !height) {
-        URL.revokeObjectURL(objectUrl);
+      if (!originalDataUrl || typeof originalDataUrl !== "string") {
         reject(new Error("Fotoğraf okunamadı."));
         return;
       }
 
-      if (width > height && width > maxSize) {
-        height = Math.round((height * maxSize) / width);
-        width = maxSize;
-      } else if (height >= width && height > maxSize) {
-        width = Math.round((width * maxSize) / height);
-        height = maxSize;
-      }
+      const img = new Image();
 
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
+      img.onload = function () {
+        let width = img.naturalWidth || img.width;
+        let height = img.naturalHeight || img.height;
 
-      const ctx = canvas.getContext("2d");
+        if (!width || !height) {
+          reject(new Error("Fotoğraf boyutu okunamadı."));
+          return;
+        }
 
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, width, height);
-      ctx.drawImage(img, 0, 0, width, height);
+        if (width > height && width > maxSize) {
+          height = Math.round((height * maxSize) / width);
+          width = maxSize;
+        } else if (height >= width && height > maxSize) {
+          width = Math.round((width * maxSize) / height);
+          height = maxSize;
+        }
 
-      const dataUrl = canvas.toDataURL("image/jpeg", quality);
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
 
-      URL.revokeObjectURL(objectUrl);
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
 
-      if (!dataUrl || !dataUrl.startsWith("data:image/jpeg;base64,")) {
-        reject(new Error("Fotoğraf JPEG formatına çevrilemedi."));
-        return;
-      }
+        const jpegDataUrl = canvas.toDataURL("image/jpeg", quality);
 
-      resolve(dataUrl);
+        if (!jpegDataUrl || !jpegDataUrl.startsWith("data:image/jpeg;base64,")) {
+          reject(new Error("Fotoğraf JPEG formatına çevrilemedi."));
+          return;
+        }
+
+        resolve(jpegDataUrl);
+      };
+
+      img.onerror = function () {
+        reject(new Error("Fotoğraf tarayıcıda okunamadı. JPG/PNG olarak tekrar dene."));
+      };
+
+      img.src = originalDataUrl;
     };
 
-    img.onerror = function () {
-      URL.revokeObjectURL(objectUrl);
-      reject(new Error("Fotoğraf yüklenemedi. JPG veya PNG olarak tekrar dene."));
+    reader.onerror = function () {
+      reject(new Error("Fotoğraf dosyası okunamadı."));
     };
 
-    img.src = objectUrl;
+    reader.readAsDataURL(file);
   });
 }
 
@@ -643,14 +891,14 @@ function hafizayaKaydet(type, result, note = "") {
   memory.unshift({
     id: Date.now(),
     type,
-    title: type === "meal" ? "Yemek Analizi" : "Vücut Analizi",
+    title: type === "meal" ? t("memoryMeal") : t("memoryBody"),
     result,
     note,
-    date: new Date().toLocaleString("tr-TR")
+    language: getCurrentLanguage(),
+    date: new Date().toLocaleString(getCurrentLanguage() === "en" ? "en-US" : "tr-TR")
   });
 
   localStorage.setItem("coachos_visual_memory", JSON.stringify(memory.slice(0, 50)));
-
   panelGuncelle();
 }
 
@@ -669,25 +917,28 @@ function hafizaGoster() {
   const c = document.getElementById("hafizaListesi");
 
   if (!memory.length) {
-    c.innerHTML = "Henüz kayıt yok.";
+    c.innerHTML = t("noMemory");
     return;
   }
 
   c.innerHTML = memory.map(item => `
     <div class="memory-item">
-      <h3>${item.title}</h3>
-      <div class="small">${item.date}</div>
-      ${item.note ? `<div class="small">Not: ${escapeHtml(item.note)}</div>` : ""}
+      <h3>${escapeHtml(item.title)}</h3>
+      <div class="small">${escapeHtml(item.date)}</div>
+      ${item.note ? `<div class="small">Not / Note: ${escapeHtml(item.note)}</div>` : ""}
       <div>${escapeHtml(item.result)}</div>
     </div>
   `).join("");
 }
 
 function hafizaTemizle() {
-  if (!confirm("Görsel hafıza temizlensin mi?")) return;
+  const msg = getCurrentLanguage() === "en"
+    ? "Clear visual memory?"
+    : "Görsel hafıza temizlensin mi?";
+
+  if (!confirm(msg)) return;
 
   localStorage.removeItem("coachos_visual_memory");
-
   hafizaGoster();
   panelGuncelle();
 }
@@ -698,16 +949,16 @@ async function yemekAnaliz() {
   const out = document.getElementById("yemekSonuc");
 
   if (!file) {
-    out.textContent = "Önce bir yemek fotoğrafı seç dostum.";
+    out.textContent = t("selectMealPhoto");
     return;
   }
 
-  out.textContent = "Fotoğraf hazırlanıyor...";
+  out.textContent = t("photoPreparing");
 
   try {
     const image = await imageFileToJpegDataUrl(file);
 
-    out.textContent = "Yemek fotoğrafı analiz ediliyor...";
+    out.textContent = t("mealAnalyzing");
 
     const r = await fetch("/api/analyze", {
       method: "POST",
@@ -717,26 +968,23 @@ async function yemekAnaliz() {
       body: JSON.stringify({
         image,
         mode: "meal",
-        note
+        note,
+        language: getCurrentLanguage()
       })
     });
 
     const data = await r.json();
 
     if (!r.ok) {
-      out.textContent =
-        "Hata: " +
-        (data.error || "Analiz çalışmadı.") +
-        (data.details ? "\n\nDetay: " + JSON.stringify(data.details, null, 2) : "");
+      out.textContent = `${t("apiError")} ${data.error || "Analysis failed."}`;
       return;
     }
 
     out.textContent = data.result;
-
     hafizayaKaydet("meal", data.result, note);
 
   } catch (e) {
-    out.textContent = "Analiz hatası: " + e.message;
+    out.textContent = `${t("analysisError")} ${e.message}`;
   }
 }
 
@@ -746,16 +994,16 @@ async function vucutAnaliz() {
   const out = document.getElementById("vucutSonuc");
 
   if (!file) {
-    out.textContent = "Önce bir vücut fotoğrafı seç dostum.";
+    out.textContent = t("selectBodyPhoto");
     return;
   }
 
-  out.textContent = "Fotoğraf hazırlanıyor...";
+  out.textContent = t("photoPreparing");
 
   try {
     const image = await imageFileToJpegDataUrl(file);
 
-    out.textContent = "Vücut fotoğrafı analiz ediliyor...";
+    out.textContent = t("bodyAnalyzing");
 
     const r = await fetch("/api/analyze", {
       method: "POST",
@@ -765,31 +1013,61 @@ async function vucutAnaliz() {
       body: JSON.stringify({
         image,
         mode: "body",
-        note
+        note,
+        language: getCurrentLanguage()
       })
     });
 
     const data = await r.json();
 
     if (!r.ok) {
-      out.textContent =
-        "Hata: " +
-        (data.error || "Analiz çalışmadı.") +
-        (data.details ? "\n\nDetay: " + JSON.stringify(data.details, null, 2) : "");
+      out.textContent = `${t("apiError")} ${data.error || "Analysis failed."}`;
       return;
     }
 
     out.textContent = data.result;
-
     hafizayaKaydet("body", data.result, note);
 
   } catch (e) {
-    out.textContent = "Analiz hatası: " + e.message;
+    out.textContent = `${t("analysisError")} ${e.message}`;
   }
 }
 
 function antrenmanOlustur() {
   const gun = val("sporGun", 4);
+
+  if (getCurrentLanguage() === "en") {
+    document.getElementById("antrenmanSonuc").textContent = gun <= 3 ?
+`Full Body Program:
+
+1. Squat / Leg Press — 3x8-12
+2. Dumbbell Bench Press — 3x8-12
+3. Lat Pulldown — 3x8-12
+4. Shoulder Press — 3x8-10
+5. Cable Row — 3x10-12
+6. Plank — 3x30-45 sec
+
+Cardio:
+15-25 minutes walking.` :
+`Upper / Lower Program:
+
+Upper Day:
+- Bench Press 4x6-10
+- Lat Pulldown 4x8-12
+- Shoulder Press 3x8-10
+- Cable Row 3x10-12
+- Lateral Raise 3x12-15
+
+Lower Day:
+- Squat / Leg Press 4x8-12
+- Romanian Deadlift 3x8-10
+- Leg Curl 3x10-12
+- Calf Raise 4x12-15
+
+Tired day:
+3 main movements + 15 minutes walking.`;
+    return;
+  }
 
   document.getElementById("antrenmanSonuc").textContent = gun <= 3 ?
 `Full Body Program:
@@ -823,7 +1101,25 @@ Yorgun gün:
 }
 
 function motivasyonVer() {
-  const mod = text("modText") || "Bugün spora gitmek istemiyorum.";
+  const mod = text("modText") || (getCurrentLanguage() === "en" ? "I don’t want to train today." : "Bugün spora gitmek istemiyorum.");
+
+  if (getCurrentLanguage() === "en") {
+    document.getElementById("motivasyonSonuc").textContent =
+`I hear your mood:
+"${mod}"
+
+But the system works like this:
+When motivation is low, minimum discipline takes over.
+
+Today's minimum task:
+- Warm up for 5 minutes
+- Do 3 exercises
+- Walk for 10 minutes
+
+I don’t expect perfection.
+Just don’t break the chain.`;
+    return;
+  }
 
   document.getElementById("motivasyonSonuc").textContent =
 `Modunu kabul ediyorum:
@@ -850,8 +1146,26 @@ function raporOlustur() {
     Number(text("rAdim")) +
     Number(text("rUyku"));
 
-  let yorum = "Dağıldı ama bitti değil. Yarın minimum görevle sisteme dön.";
+  if (getCurrentLanguage() === "en") {
+    let yorum = "Messy day, but not over. Return tomorrow with the minimum task.";
+    if (puan >= 80) yorum = "Strong day. Keep going.";
+    else if (puan >= 60) yorum = "Average day. The chain is not broken, but tomorrow needs more structure.";
 
+    document.getElementById("raporSonuc").textContent =
+`Today's Score: ${puan}/100
+
+Comment:
+${yorum}
+
+Clear task for tomorrow:
+- Prioritize protein earlier
+- Spread water across the day
+- Add 20 minutes walking
+- If workout is missed, complete the minimum task`;
+    return;
+  }
+
+  let yorum = "Dağıldı ama bitti değil. Yarın minimum görevle sisteme dön.";
   if (puan >= 80) yorum = "Güzel gün. Böyle devam.";
   else if (puan >= 60) yorum = "Orta gün. Zincir kırılmadı ama yarın daha net olacağız.";
 
@@ -871,21 +1185,18 @@ Yarın için net görev:
 function speakText(message) {
   if (!message || !message.trim()) return;
 
-  if (!window.speechSynthesis) {
-    console.log("Bu tarayıcı sesli yanıtı desteklemiyor.");
-    return;
-  }
+  if (!window.speechSynthesis) return;
 
   window.speechSynthesis.cancel();
 
   const cleanMessage = message
     .replace(/[\n\r]+/g, ". ")
     .replace(/\s+/g, " ")
-    .slice(0, 700);
+    .slice(0, 900);
 
   const utterance = new SpeechSynthesisUtterance(cleanMessage);
 
-  utterance.lang = "tr-TR";
+  utterance.lang = getCurrentLanguage() === "en" ? "en-US" : "tr-TR";
   utterance.rate = 0.95;
   utterance.pitch = 1;
   utterance.volume = 1;
@@ -918,13 +1229,17 @@ async function sendCommandToGemini(command) {
   const input = document.getElementById("voiceText");
 
   if (!command || !command.trim()) {
-    out.textContent = "Komut boş. Örnek: Yemek analizi aç.";
+    out.textContent = getCurrentLanguage() === "en"
+      ? "Command is empty. Example: Open meal analysis."
+      : "Komut boş. Örnek: Yemek analizi aç.";
     return;
   }
 
   input.value = command;
 
-  out.textContent = "Gemini komutu yorumluyor...";
+  out.textContent = getCurrentLanguage() === "en"
+    ? "Gemini is interpreting your command..."
+    : "Gemini komutu yorumluyor...";
 
   try {
     const r = await fetch("/api/gemini-command", {
@@ -935,20 +1250,21 @@ async function sendCommandToGemini(command) {
       body: JSON.stringify({
         command,
         profile: getCoachOSProfileForGemini(),
-        targets: getCoachOSTargetsForGemini()
+        targets: getCoachOSTargetsForGemini(),
+        language: getCurrentLanguage()
       })
     });
 
     const data = await r.json();
 
     if (!r.ok) {
-      out.textContent = "Hata: " + (data.error || "Gemini komutu çalışmadı.");
+      out.textContent = `${t("apiError")} ${data.error || "Gemini command failed."}`;
       speakText(out.textContent);
       return;
     }
 
-    out.textContent = data.message || "Komut alındı.";
-    speakText(data.message || "Komut alındı.");
+    out.textContent = data.message || (getCurrentLanguage() === "en" ? "Command received." : "Komut alındı.");
+    speakText(out.textContent);
 
     if (data.action === "motivate") {
       goPage("motivasyon");
@@ -957,16 +1273,15 @@ async function sendCommandToGemini(command) {
 
       const motivationText = document.getElementById("motivasyonSonuc").textContent;
       speakText(motivationText);
-
       return;
     }
 
     if (data.action === "create_workout") {
       goPage("antrenman");
       antrenmanOlustur();
-
-      speakText("Antrenman programını oluşturdum. Bugün amaç mükemmel olmak değil, zinciri kırmamak.");
-
+      speakText(getCurrentLanguage() === "en"
+        ? "Workout program created. The goal is not perfection today. Do not break the chain."
+        : "Antrenman programını oluşturdum. Bugün amaç mükemmel olmak değil, zinciri kırmamak.");
       return;
     }
 
@@ -987,7 +1302,7 @@ async function sendCommandToGemini(command) {
     }
 
   } catch (e) {
-    out.textContent = "Komut hatası: " + e.message;
+    out.textContent = `${t("analysisError")} ${e.message}`;
     speakText(out.textContent);
   }
 }
@@ -1003,7 +1318,9 @@ function startVoiceCommand() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 
   if (!SR) {
-    out.textContent = "Bu tarayıcı ses tanımayı desteklemiyor. Komutu yazı olarak gir.";
+    out.textContent = getCurrentLanguage() === "en"
+      ? "This browser does not support voice recognition. Type your command instead."
+      : "Bu tarayıcı ses tanımayı desteklemiyor. Komutu yazı olarak gir.";
     if (input) input.focus();
     return;
   }
@@ -1011,7 +1328,7 @@ function startVoiceCommand() {
   try {
     const rec = new SR();
 
-    rec.lang = "tr-TR";
+    rec.lang = getCurrentLanguage() === "en" ? "en-US" : "tr-TR";
     rec.interimResults = false;
     rec.continuous = false;
     rec.maxAlternatives = 1;
@@ -1019,11 +1336,15 @@ function startVoiceCommand() {
     let started = false;
     let receivedResult = false;
 
-    out.textContent = "Dinliyorum... Konuşmaya hemen başla.";
+    out.textContent = getCurrentLanguage() === "en"
+      ? "Listening... Start speaking now."
+      : "Dinliyorum... Konuşmaya hemen başla.";
 
     rec.onstart = function () {
       started = true;
-      out.textContent = "Dinliyorum... Şimdi konuş.";
+      out.textContent = getCurrentLanguage() === "en"
+        ? "Listening... Speak now."
+        : "Dinliyorum... Şimdi konuş.";
     };
 
     rec.onresult = function (event) {
@@ -1033,47 +1354,31 @@ function startVoiceCommand() {
     };
 
     rec.onerror = function (event) {
-      if (event.error === "aborted") {
-        out.textContent =
-          "Mikrofon tarayıcı tarafından iptal edildi. Komutu yazıp 'Komutu Gönder' bas.";
-        if (input) input.focus();
-        return;
-      }
-
-      if (event.error === "not-allowed") {
-        out.textContent =
-          "Mikrofon izni verilmedi. Safari/Chrome ayarlarından mikrofon iznini aç.";
-        return;
-      }
-
-      if (event.error === "no-speech") {
-        out.textContent =
-          "Ses duyulmadı. Butona basınca hemen konuş veya komutu yazı olarak gönder.";
-        if (input) input.focus();
-        return;
-      }
-
-      out.textContent =
-        "Ses algılanamadı: " + event.error + ". Komutu yazı olarak da girebilirsin.";
+      out.textContent = getCurrentLanguage() === "en"
+        ? "Voice could not be detected. Type the command instead."
+        : "Ses algılanamadı. Komutu yazı olarak da girebilirsin.";
       if (input) input.focus();
     };
 
     rec.onend = function () {
       if (started && !receivedResult) {
-        out.textContent =
-          "Ses tamamlanmadı. Komutu yazı olarak girebilir veya tekrar deneyebilirsin.";
+        out.textContent = getCurrentLanguage() === "en"
+          ? "Voice was not completed. You can type the command instead."
+          : "Ses tamamlanmadı. Komutu yazı olarak girebilirsin.";
       }
     };
 
     rec.start();
 
   } catch (error) {
-    out.textContent =
-      "Mikrofon başlatılamadı: " + error.message + ". Komutu yazı olarak gir.";
+    out.textContent = getCurrentLanguage() === "en"
+      ? "Microphone could not start. Type your command."
+      : "Mikrofon başlatılamadı. Komutu yazı olarak gir.";
     if (input) input.focus();
   }
 }
 
+applyLanguage();
 panelGuncelle();
 </script>
 
