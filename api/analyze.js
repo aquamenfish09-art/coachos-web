@@ -28,8 +28,31 @@ function wait(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function cleanLanguage(language) {
+  return language === "en" ? "en" : "tr";
+}
+
 function langName(language) {
-  return language === "en" ? "English" : "Turkish";
+  return cleanLanguage(language) === "en" ? "English" : "Turkish";
+}
+
+function fallbackText(language, type) {
+  if (language === "en") {
+    return type === "body"
+      ? "Body analysis could not be generated. Please upload a clearer photo with good lighting."
+      : "Meal analysis could not be generated. Please upload a clearer meal photo.";
+  }
+
+  return type === "body"
+    ? "Vücut analizi oluşturulamadı. Daha net, iyi ışıklı bir fotoğraf yükle."
+    : "Yemek analizi oluşturulamadı. Daha net bir yemek fotoğrafı yükle.";
+}
+
+function sanitizeReport(text) {
+  return String(text || "")
+    .replace(/^```[a-zA-Z]*\s*/g, "")
+    .replace(/```$/g, "")
+    .trim();
 }
 
 function getMealPrompt(note, language = "tr") {
@@ -47,7 +70,7 @@ Food names may keep their original local names when useful.
 You are not a simple food recognition system.
 You are a professional AI nutrition coach that recognizes world cuisine, estimates visual portions, calculates calories/macros, evaluates micronutrients, and comments based on fat loss and muscle retention goals.
 
-User note:
+USER NOTE:
 ${note || "None"}
 
 OUTPUT RULES:
@@ -107,9 +130,7 @@ Nutrition logic:
 - yogurt-based foods: protein + fat impact
 - sauces may add hidden fat/calories
 
-Use this exact report structure.
-
-If output language is Turkish:
+If output language is Turkish, use this exact report structure:
 
 CoachOS Dünya Mutfağı Yemek Analizi
 
@@ -189,7 +210,7 @@ CoachOS Dünya Mutfağı Yemek Analizi
 Not:
 Bu analiz fotoğrafa göre tahminidir. Kesin değer için gramaj gerekir.
 
-If output language is English:
+If output language is English, use this exact report structure:
 
 CoachOS World Cuisine Meal Analysis
 
@@ -284,92 +305,263 @@ function getBodyPrompt(note, language = "tr") {
   const outputLanguage = langName(language);
 
   return `
-You are CoachOS Body Analysis Engine v8.
+You are CoachOS Elite Body Analysis Engine v9.
 
 OUTPUT LANGUAGE:
 Write the entire visible report in ${outputLanguage}.
+If the output language is Turkish, use Turkish headings and Turkish coaching comments.
+If the output language is English, use English headings and English coaching comments.
 
-User note:
+USER NOTE:
 ${note || "None"}
 
-Rules:
+ROLE:
+You are not a simple image description model.
+You are a professional AI fitness coach that analyzes body composition visually and creates a realistic transformation strategy.
+
+MAIN GOAL:
+Analyze the body image for fitness purposes:
+- estimated body fat range
+- fat distribution
+- muscle mass appearance
+- strong areas
+- weak areas
+- posture and symmetry
+- training priority
+- nutrition priority
+- cardio / steps priority
+- 90-day transformation strategy
+- clear coach comment
+
+SAFETY RULES:
 - Do not diagnose medical conditions.
-- Do not give a precise body fat percentage; give an estimated range.
-- Do not infer identity, age, ethnicity or sensitive attributes.
-- Do not use insulting language.
-- Focus on fitness, posture, fat loss, muscle retention and 90-day strategy.
-- Do not write JSON.
-- Write a clean user-facing report.
+- Do not claim exact body fat percentage.
+- Always give an estimated range.
+- Do not identify the person.
+- Do not infer age, ethnicity, religion, identity or sensitive attributes.
+- Do not insult the user.
+- Do not shame the user.
+- Be direct, useful, disciplined and motivating.
+- This is a fitness analysis, not a medical evaluation.
+- If lighting, angle, clothing, cropping or pose limits accuracy, say it clearly and still provide useful strategy.
 
-If Turkish, use this format:
+VISUAL ANALYSIS LOGIC:
+When analyzing the image, evaluate what is visible:
+1. Overall body fat level
+2. Waist and belly fat visibility
+3. Chest shape and fat distribution
+4. Shoulder width and roundness
+5. Arm muscle visibility
+6. Back thickness if visible
+7. Leg development if visible
+8. Posture, shoulder position and torso position if visible
+9. Symmetry
+10. Muscle definition level
+11. Current athletic potential
+12. What should be prioritized first
 
-CoachOS Görsel Vücut Analizi
+BODY FAT RANGE GUIDANCE:
+Use estimated ranges, never exact values.
 
-1) Tahmini Yağ Oranı:
+If the image shows:
+- visible abs and clear definition: lower range
+- some muscle shape but waist/belly fat: moderate range
+- clear belly/waist fat and low definition: higher range
+- limited visibility or bad lighting: wider range
+
+Do not be overconfident.
+If the image is unclear, say the confidence is moderate or low.
+
+FITNESS STRATEGY LOGIC:
+The user likely wants:
+- fat loss
+- muscle retention
+- better physique
+- stronger visual shape
+- sustainable progress
+
+Prioritize:
+- high protein
+- controlled calorie deficit if fat loss is needed
+- strength training
+- progressive overload
+- steps / cardio
+- sleep and water
+- consistency
+- weekly measurement tracking
+
+Do not suggest extreme diets.
+Do not suggest crash weight loss.
+Do not suggest unhealthy calorie targets.
+Do not promise impossible transformations.
+
+REPORT STYLE:
+Write cleanly.
+Use strong headings.
+Use short but valuable explanations.
+Make the report feel premium and professional.
+Do not write JSON.
+Do not write markdown tables.
+Do not write raw data.
+Do not write code block.
+Do not use generic filler. Analyze what is visually visible.
+
+If the output language is Turkish, use this exact structure:
+
+CoachOS Elite Vücut Analizi
+
+1) Genel Vücut Kompozisyonu:
+- Tahmini yağ oranı:
+- Genel görünüm:
+- Analiz güveni:
+
+2) Yağ Dağılımı:
+- Bel / karın bölgesi:
+- Göğüs bölgesi:
+- Sırt / yan bel:
+- Genel yağ dağılım yorumu:
+
+3) Kas Kütlesi Görünümü:
+- Omuz:
+- Göğüs:
+- Kol:
+- Sırt:
+- Bacak:
+- Genel kas yorumu:
+
+4) Güçlü Bölgeler:
+1.
+2.
+3.
+
+5) Gelişmesi Gereken Bölgeler:
+1.
+2.
+3.
+
+6) Postür ve Simetri:
+- Omuz duruşu:
+- Gövde duruşu:
+- Simetri yorumu:
+- Dikkat edilmesi gereken:
+
+7) Hedef Vücut Tipi Yorumu:
+- Mevcut durumdan en mantıklı hedef:
+- 90 günde gerçekçi değişim:
+- Uzun vadeli potansiyel:
+
+8) 90 Günlük Strateji:
+- Kalori stratejisi:
+- Protein stratejisi:
+- Ağırlık antrenmanı:
+- Kardiyo / adım:
+- Uyku / su:
+- Haftalık kontrol:
+
+9) Antrenman Önceliği:
+- Birinci öncelik:
+- İkinci öncelik:
+- Üçüncü öncelik:
+- Kaçınılması gereken hata:
+
+10) Beslenme Önceliği:
+- Günlük protein:
+- Kalori açığı:
+- Karbonhidrat yönetimi:
+- Yağ yönetimi:
+- En kritik beslenme hatası:
+
+11) Koçun Net Yorumu:
 -
 
-2) Kas Kütlesi Görünümü:
--
-
-3) Güçlü Bölgeler:
--
-
-4) Gelişmesi Gereken Bölgeler:
--
-
-5) Postür / Duruş:
--
-
-6) Hedefe Göre Yorum:
--
-
-7) 90 Günlük Strateji:
-- Kalori:
-- Protein:
-- Antrenman:
-- Kardiyo/adım:
-- Uyku/su:
-
-8) Net Koç Yorumu:
--
+12) Bugünden Başlanacak 3 Görev:
+1.
+2.
+3.
 
 Güvenlik notu:
-Bu analiz görsele göre tahminidir; tıbbi değerlendirme değildir.
+Bu analiz görsele göre tahminidir. Tıbbi değerlendirme değildir. Kesin ölçüm için profesyonel ölçüm gerekir.
 
-If English, use this format:
+If the output language is English, use this exact structure:
 
-CoachOS Body Image Analysis
+CoachOS Elite Body Analysis
 
-1) Estimated Body Fat Range:
+1) Overall Body Composition:
+- Estimated body fat range:
+- General appearance:
+- Analysis confidence:
+
+2) Fat Distribution:
+- Waist / belly area:
+- Chest area:
+- Back / love handle area:
+- Overall fat distribution comment:
+
+3) Muscle Mass Appearance:
+- Shoulders:
+- Chest:
+- Arms:
+- Back:
+- Legs:
+- Overall muscle comment:
+
+4) Strong Areas:
+1.
+2.
+3.
+
+5) Areas to Improve:
+1.
+2.
+3.
+
+6) Posture and Symmetry:
+- Shoulder posture:
+- Torso posture:
+- Symmetry comment:
+- What to watch:
+
+7) Goal Physique Comment:
+- Most realistic goal from current condition:
+- Realistic 90-day change:
+- Long-term potential:
+
+8) 90-Day Strategy:
+- Calorie strategy:
+- Protein strategy:
+- Strength training:
+- Cardio / steps:
+- Sleep / water:
+- Weekly check-in:
+
+9) Training Priority:
+- First priority:
+- Second priority:
+- Third priority:
+- Mistake to avoid:
+
+10) Nutrition Priority:
+- Daily protein:
+- Calorie deficit:
+- Carb management:
+- Fat management:
+- Most critical nutrition mistake:
+
+11) Clear Coach Comment:
 -
 
-2) Muscle Mass Appearance:
--
-
-3) Strong Areas:
--
-
-4) Areas to Improve:
--
-
-5) Posture:
--
-
-6) Goal-Based Comment:
--
-
-7) 90-Day Strategy:
-- Calories:
-- Protein:
-- Training:
-- Cardio/steps:
-- Sleep/water:
-
-8) Clear Coach Comment:
--
+12) 3 Tasks to Start Today:
+1.
+2.
+3.
 
 Safety note:
-This analysis is an estimate based on the image and is not a medical evaluation.
+This analysis is an estimate based on the image. It is not a medical evaluation. Accurate measurement requires professional assessment.
+
+IMPORTANT:
+If the body is visible, do not give a generic answer.
+Analyze what is visually visible.
+If visibility is limited, explain the limitation and still produce a practical strategy.
 `;
 }
 
@@ -399,8 +591,8 @@ async function callGemini({ model, apiKey, prompt, parsedImage }) {
           }
         ],
         generationConfig: {
-          temperature: 0.15,
-          maxOutputTokens: 2600
+          temperature: 0.12,
+          maxOutputTokens: 3200
         }
       })
     }
@@ -442,23 +634,27 @@ async function callGeminiWithRetry({ apiKey, prompt, parsedImage }) {
       };
 
       const isTemporary =
+        result.status === 429 ||
         result.status === 500 ||
+        result.status === 502 ||
         result.status === 503 ||
-        result.status === 429;
+        result.status === 504;
 
-      if (!isTemporary) break;
+      if (!isTemporary) {
+        break;
+      }
 
       await wait(700 * attempt);
     }
   }
 
   throw {
-    message: "Gemini API could not respond or all fallback models failed.",
+    message: "Gemini API geçici olarak cevap veremedi veya tüm modeller başarısız oldu.",
     lastError
   };
 }
 
-function extractText(data) {
+function extractText(data, language, type) {
   const text =
     data.candidates?.[0]?.content?.parts
       ?.map(part => part.text || "")
@@ -466,10 +662,10 @@ function extractText(data) {
       .trim();
 
   if (!text) {
-    return "Analiz sonucu alınamadı. Fotoğrafı daha net çekip tekrar dene.";
+    return fallbackText(language, type);
   }
 
-  return text;
+  return sanitizeReport(text);
 }
 
 export default async function handler(req, res) {
@@ -482,15 +678,21 @@ export default async function handler(req, res) {
   try {
     const { image, mode, note, language } = req.body || {};
 
+    const finalLanguage = cleanLanguage(language);
+
     if (!image || typeof image !== "string") {
       return res.status(400).json({
-        error: "Fotoğraf verisi eksik veya hatalı."
+        error: finalLanguage === "en"
+          ? "Image data is missing or invalid."
+          : "Fotoğraf verisi eksik veya hatalı."
       });
     }
 
     if (!mode || !["meal", "body"].includes(mode)) {
       return res.status(400).json({
-        error: "Analiz tipi hatalı. mode 'meal' veya 'body' olmalı."
+        error: finalLanguage === "en"
+          ? "Invalid analysis type. mode must be 'meal' or 'body'."
+          : "Analiz tipi hatalı. mode 'meal' veya 'body' olmalı."
       });
     }
 
@@ -498,7 +700,9 @@ export default async function handler(req, res) {
 
     if (!parsedImage) {
       return res.status(400).json({
-        error: "Fotoğraf formatı hatalı. Görsel data:image/jpeg;base64 formatında gönderilmeli."
+        error: finalLanguage === "en"
+          ? "Invalid image format. The image must be sent as data:image/jpeg;base64."
+          : "Fotoğraf formatı hatalı. Görsel data:image/jpeg;base64 formatında gönderilmeli."
       });
     }
 
@@ -510,11 +714,10 @@ export default async function handler(req, res) {
       });
     }
 
-    const cleanLanguage = language === "en" ? "en" : "tr";
-
-    const prompt = mode === "meal"
-      ? getMealPrompt(note, cleanLanguage)
-      : getBodyPrompt(note, cleanLanguage);
+    const prompt =
+      mode === "meal"
+        ? getMealPrompt(note, finalLanguage)
+        : getBodyPrompt(note, finalLanguage);
 
     const geminiResult = await callGeminiWithRetry({
       apiKey,
@@ -522,7 +725,7 @@ export default async function handler(req, res) {
       parsedImage
     });
 
-    const result = extractText(geminiResult.data);
+    const result = extractText(geminiResult.data, finalLanguage, mode);
 
     return res.status(200).json({
       result
@@ -531,7 +734,10 @@ export default async function handler(req, res) {
   } catch (error) {
     return res.status(500).json({
       error: "Gemini API hatası.",
-      details: error
+      details: {
+        message: error?.message || "Bilinmeyen hata",
+        lastError: error?.lastError || null
+      }
     });
   }
 }
