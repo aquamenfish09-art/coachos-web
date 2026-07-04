@@ -2207,3 +2207,127 @@ panelGuncelle();
   }
 })();
 </script>
+<!-- CoachOS Panel Summary Sync v4 -->
+<script>
+(function () {
+  try {
+    function ready(fn) {
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", fn);
+      } else {
+        fn();
+      }
+    }
+
+    ready(function () {
+      function todayKey() {
+        var d = new Date();
+        return "coachos_daily_tracking_" + d.getFullYear() + "-" +
+          String(d.getMonth() + 1).padStart(2, "0") + "-" +
+          String(d.getDate()).padStart(2, "0");
+      }
+
+      function getTodayTracking() {
+        try {
+          var raw = localStorage.getItem(todayKey());
+          if (!raw) return null;
+          return JSON.parse(raw);
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function findDashboardCard(label) {
+        var cards = document.querySelectorAll(".card");
+
+        for (var i = 0; i < cards.length; i++) {
+          var card = cards[i];
+
+          if (card.closest("#coachos-tracking-panel")) continue;
+
+          var text = (card.textContent || "").trim();
+
+          if (text.indexOf(label) === 0 || text.indexOf(label + "\n") === 0) {
+            return card;
+          }
+        }
+
+        return null;
+      }
+
+      function setCardValue(label, value) {
+        var card = findDashboardCard(label);
+        if (!card) return;
+
+        var children = card.children;
+
+        if (children.length >= 2) {
+          children[1].textContent = value;
+          return;
+        }
+
+        var lines = card.innerHTML.split("<br>");
+        if (lines.length > 1) {
+          card.innerHTML = lines[0] + "<br><strong>" + value + "</strong>";
+          return;
+        }
+
+        card.innerHTML = "<div>" + label + "</div><strong>" + value + "</strong>";
+      }
+
+      function syncPanelSummary() {
+        var data = getTodayTracking();
+
+        if (!data) {
+          setCardValue("Kalori", "-");
+          setCardValue("Protein", "-");
+          setCardValue("Su", "-");
+          setCardValue("Adım", "-");
+          return;
+        }
+
+        var calorieText = data.calorie === "good"
+          ? "İyi"
+          : data.calorie === "medium"
+            ? "Orta"
+            : data.calorie === "bad"
+              ? "Dağıldı"
+              : "-";
+
+        setCardValue("Kalori", calorieText);
+        setCardValue("Protein", (data.protein || 0) + " g");
+        setCardValue("Su", (data.water || 0) + " L");
+        setCardValue("Adım", data.steps || 0);
+      }
+
+      syncPanelSummary();
+
+      var saveBtn = document.getElementById("track-save-btn");
+      var loadBtn = document.getElementById("track-load-btn");
+      var clearBtn = document.getElementById("track-clear-btn");
+
+      if (saveBtn) {
+        saveBtn.addEventListener("click", function () {
+          setTimeout(syncPanelSummary, 100);
+        });
+      }
+
+      if (loadBtn) {
+        loadBtn.addEventListener("click", function () {
+          setTimeout(syncPanelSummary, 100);
+        });
+      }
+
+      if (clearBtn) {
+        clearBtn.addEventListener("click", function () {
+          setTimeout(syncPanelSummary, 100);
+        });
+      }
+
+      window.coachosSyncPanelSummary = syncPanelSummary;
+    });
+  } catch (error) {
+    console.error("CoachOS Panel Summary Sync v4 error:", error);
+  }
+})();
+</script>
