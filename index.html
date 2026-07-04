@@ -2331,3 +2331,272 @@ panelGuncelle();
   }
 })();
 </script>
+<!-- CoachOS Report Tracking Link v5 -->
+<script>
+(function () {
+  try {
+    function ready(fn) {
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", fn);
+      } else {
+        fn();
+      }
+    }
+
+    ready(function () {
+      function todayKey() {
+        var d = new Date();
+        return "coachos_daily_tracking_" + d.getFullYear() + "-" +
+          String(d.getMonth() + 1).padStart(2, "0") + "-" +
+          String(d.getDate()).padStart(2, "0");
+      }
+
+      function getTodayTracking() {
+        try {
+          var raw = localStorage.getItem(todayKey());
+          if (!raw) return null;
+          return JSON.parse(raw);
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function calculateScore(data) {
+        if (!data) return 0;
+
+        var score = 0;
+
+        if (data.protein >= 160) score += 25;
+        else if (data.protein >= 120) score += 18;
+        else if (data.protein >= 80) score += 10;
+
+        if (data.water >= 3) score += 20;
+        else if (data.water >= 2) score += 12;
+        else if (data.water >= 1) score += 6;
+
+        if (data.steps >= 9000) score += 20;
+        else if (data.steps >= 6000) score += 12;
+        else if (data.steps >= 3000) score += 6;
+
+        if (data.workout === "done") score += 20;
+        else if (data.workout === "minimum") score += 12;
+
+        if (data.calorie === "good") score += 10;
+        else if (data.calorie === "medium") score += 5;
+
+        if (data.sleep >= 7) score += 5;
+        else if (data.sleep >= 5) score += 2;
+
+        return Math.min(score, 100);
+      }
+
+      function labelWorkout(value) {
+        if (value === "done") return "Yaptım";
+        if (value === "minimum") return "Minimum görev yaptım";
+        if (value === "missed") return "Yapmadım";
+        return value || "-";
+      }
+
+      function labelCalorie(value) {
+        if (value === "good") return "İyi gittim";
+        if (value === "medium") return "Orta gittim";
+        if (value === "bad") return "Dağıldım";
+        return value || "-";
+      }
+
+      function statusLine(ok, goodText, badText) {
+        return ok ? "✅ " + goodText : "⚠️ " + badText;
+      }
+
+      function scoreComment(score) {
+        if (score >= 85) return "Bugün çok sağlam geçmiş. Disiplin puanın yüksek; bu tempo yağ yakımı ve kas koruma için güçlü.";
+        if (score >= 65) return "Gün iyi seviyede. Birkaç açık var ama sistem bozulmamış. Yarın küçük düzeltmeyle daha iyi olur.";
+        if (score >= 40) return "Bugün orta seviye. Ana hedef yarın protein, su ve adımı tekrar raya almak.";
+        return "Bugün zayıf kalmış. Sorun değil; yarın minimum görevlerle sistemi yeniden başlatıyoruz.";
+      }
+
+      function getMissingTasks(data) {
+        var tasks = [];
+
+        if (!data || data.protein < 120) tasks.push("Protein hedefini yükselt: en az 120 g üstüne çık.");
+        if (!data || data.water < 2.5) tasks.push("Su tüketimini toparla: minimum 2.5-3 L hedefle.");
+        if (!data || data.steps < 7000) tasks.push("Adımı artır: minimum 7000-9000 adım bandına yaklaş.");
+        if (!data || data.workout === "missed") tasks.push("Antrenman yoksa minimum görev yap: 15 dakika yürüyüş + 3 set şınav.");
+        if (!data || data.calorie === "bad") tasks.push("Kalori düzenini toparla: gece kaçamağı ve sıvı kaloriyi kes.");
+        if (!data || data.sleep < 6) tasks.push("Uykuyu düzelt: en az 6-7 saat hedefle.");
+
+        if (tasks.length === 0) {
+          tasks.push("Bugün açık yok. Yarın aynı sistemi tekrar et.");
+        }
+
+        return tasks;
+      }
+
+      function ensureReportPanel() {
+        var panel = document.getElementById("coachos-linked-report-panel");
+
+        if (panel) return panel;
+
+        panel = document.createElement("section");
+        panel.id = "coachos-linked-report-panel";
+        panel.style.display = "none";
+        panel.style.maxWidth = "1100px";
+        panel.style.margin = "24px auto";
+        panel.style.padding = "16px";
+
+        document.body.appendChild(panel);
+
+        return panel;
+      }
+
+      function setActiveReportButton(reportBtn) {
+        var buttons = document.querySelectorAll("nav button, header button, .tabs button, .nav button, button[data-page]");
+        buttons.forEach(function (btn) {
+          btn.classList.remove("active");
+          btn.style.background = "";
+          btn.style.color = "";
+        });
+
+        if (reportBtn) {
+          reportBtn.classList.add("active");
+          reportBtn.style.background = "#22c55e";
+          reportBtn.style.color = "#03120a";
+        }
+      }
+
+      function hideTrackingPanel() {
+        var tracking = document.getElementById("coachos-tracking-panel");
+        if (tracking) tracking.style.display = "none";
+      }
+
+      function renderReport(reportBtn) {
+        var panel = ensureReportPanel();
+        var data = getTodayTracking();
+        var score = calculateScore(data);
+        var missingTasks = getMissingTasks(data);
+
+        hideTrackingPanel();
+        setActiveReportButton(reportBtn);
+
+        panel.style.display = "block";
+        panel.style.visibility = "visible";
+        panel.style.opacity = "1";
+
+        if (!data) {
+          panel.innerHTML = `
+            <div class="card">
+              <h2>Günlük Rapor</h2>
+              <p>Bugün için kayıtlı takip verisi yok.</p>
+              <p>Önce <strong>Takip</strong> sekmesine girip protein, su, adım, antrenman, kalori ve uyku bilgilerini kaydet.</p>
+            </div>
+          `;
+
+          panel.scrollIntoView({ behavior: "smooth", block: "start" });
+          return;
+        }
+
+        panel.innerHTML = `
+          <div class="card">
+            <h2>Günlük CoachOS Raporu</h2>
+            <p>Bugünkü takip verilerine göre disiplin, beslenme ve antrenman durumun.</p>
+
+            <div style="font-size:42px;font-weight:900;margin:14px 0;color:#22c55e;">
+              ${score}/100
+            </div>
+
+            <p><strong>Koç Yorumu:</strong><br>${scoreComment(score)}</p>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-top:16px;">
+            <div class="card">
+              <h3>Protein</h3>
+              <div style="font-size:28px;font-weight:900;color:#22c55e;">${data.protein || 0} g</div>
+              <p>${statusLine((data.protein || 0) >= 120, "Kas koruma için iyi seviye.", "Protein düşük kalmış.")}</p>
+            </div>
+
+            <div class="card">
+              <h3>Su</h3>
+              <div style="font-size:28px;font-weight:900;color:#22c55e;">${data.water || 0} L</div>
+              <p>${statusLine((data.water || 0) >= 2.5, "Su dengesi iyi.", "Su hedefi düşük kalmış.")}</p>
+            </div>
+
+            <div class="card">
+              <h3>Adım</h3>
+              <div style="font-size:28px;font-weight:900;color:#22c55e;">${data.steps || 0}</div>
+              <p>${statusLine((data.steps || 0) >= 7000, "Günlük hareket iyi.", "Adım sayısı düşük.")}</p>
+            </div>
+
+            <div class="card">
+              <h3>Antrenman</h3>
+              <div style="font-size:24px;font-weight:900;color:#22c55e;">${labelWorkout(data.workout)}</div>
+              <p>${statusLine(data.workout === "done" || data.workout === "minimum", "Antrenman disiplini korunmuş.", "Bugün antrenman kaçmış.")}</p>
+            </div>
+
+            <div class="card">
+              <h3>Kalori</h3>
+              <div style="font-size:24px;font-weight:900;color:#22c55e;">${labelCalorie(data.calorie)}</div>
+              <p>${statusLine(data.calorie === "good" || data.calorie === "medium", "Kalori düzeni kontrol altında.", "Kalori düzeni dağılmış.")}</p>
+            </div>
+
+            <div class="card">
+              <h3>Uyku</h3>
+              <div style="font-size:28px;font-weight:900;color:#22c55e;">${data.sleep || 0} saat</div>
+              <p>${statusLine((data.sleep || 0) >= 6, "Toparlanma kabul edilebilir.", "Uyku düşük kalmış.")}</p>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:16px;">
+            <h3>Eksik Kalan Görevler</h3>
+            <ol>
+              ${missingTasks.map(function (task) {
+                return "<li>" + task + "</li>";
+              }).join("")}
+            </ol>
+          </div>
+
+          <div class="card" style="margin-top:16px;">
+            <h3>Yarın İçin Net Plan</h3>
+            <ul>
+              <li>Protein: minimum 120-160 g bandını hedefle.</li>
+              <li>Su: 2.5-3.2 L arası tamamla.</li>
+              <li>Adım: minimum 7000, ideal 9000+.</li>
+              <li>Antrenman yoksa minimum görev yap: 15 dakika yürüyüş + kısa vücut ağırlığı seti.</li>
+              <li>Kaloriyi bozacak en riskli öğünü önceden planla.</li>
+            </ul>
+          </div>
+        `;
+
+        panel.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      function findReportButtons() {
+        var buttons = Array.from(document.querySelectorAll("button"));
+
+        return buttons.filter(function (btn) {
+          var text = (btn.textContent || "").trim().toLowerCase();
+          var page = (btn.getAttribute("data-page") || "").trim().toLowerCase();
+
+          return text === "rapor" || page === "rapor";
+        });
+      }
+
+      var reportButtons = findReportButtons();
+
+      reportButtons.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          setTimeout(function () {
+            renderReport(btn);
+          }, 80);
+        });
+      });
+
+      window.coachosRenderTrackingReport = function () {
+        var btn = findReportButtons()[0] || null;
+        renderReport(btn);
+      };
+    });
+  } catch (error) {
+    console.error("CoachOS Report Tracking Link v5 error:", error);
+  }
+})();
+</script>
