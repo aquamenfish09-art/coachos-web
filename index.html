@@ -1977,3 +1977,233 @@ panelGuncelle();
   }
 })();
 </script>
+<!-- CoachOS Tracking UX Fix v3 -->
+<script>
+(function () {
+  try {
+    function ready(fn) {
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", fn);
+      } else {
+        fn();
+      }
+    }
+
+    ready(function () {
+      var btn = document.getElementById("coachos-track-tab");
+      var panel = document.getElementById("coachos-tracking-panel");
+
+      if (!btn || !panel) return;
+
+      function labelWorkout(value) {
+        if (value === "done") return "Yaptım";
+        if (value === "minimum") return "Minimum görev yaptım";
+        if (value === "missed") return "Yapmadım";
+        return value || "-";
+      }
+
+      function labelCalorie(value) {
+        if (value === "good") return "İyi gittim";
+        if (value === "medium") return "Orta gittim";
+        if (value === "bad") return "Dağıldım";
+        return value || "-";
+      }
+
+      function todayKey() {
+        var d = new Date();
+        return "coachos_daily_tracking_" + d.getFullYear() + "-" +
+          String(d.getMonth() + 1).padStart(2, "0") + "-" +
+          String(d.getDate()).padStart(2, "0");
+      }
+
+      function getNumber(id) {
+        var el = document.getElementById(id);
+        var value = Number(el && el.value ? el.value : 0);
+        return isNaN(value) ? 0 : value;
+      }
+
+      function getValue(id) {
+        var el = document.getElementById(id);
+        return el ? el.value : "";
+      }
+
+      function calculateScore(data) {
+        var score = 0;
+
+        if (data.protein >= 160) score += 25;
+        else if (data.protein >= 120) score += 18;
+        else if (data.protein >= 80) score += 10;
+
+        if (data.water >= 3) score += 20;
+        else if (data.water >= 2) score += 12;
+        else if (data.water >= 1) score += 6;
+
+        if (data.steps >= 9000) score += 20;
+        else if (data.steps >= 6000) score += 12;
+        else if (data.steps >= 3000) score += 6;
+
+        if (data.workout === "done") score += 20;
+        else if (data.workout === "minimum") score += 12;
+
+        if (data.calorie === "good") score += 10;
+        else if (data.calorie === "medium") score += 5;
+
+        if (data.sleep >= 7) score += 5;
+        else if (data.sleep >= 5) score += 2;
+
+        return Math.min(score, 100);
+      }
+
+      function coachComment(score) {
+        if (score >= 85) return "Çok iyi dostum. Bugün sistem gibi çalışmışsın. Aynen devam.";
+        if (score >= 65) return "İyi gidiyorsun. Bir iki açık var ama gün kurtarılmış.";
+        if (score >= 40) return "Orta seviye. Bugün minimum disiplini korumuşsun ama yarın toparlaman lazım.";
+        return "Bugün zayıf kalmış. Sorun değil, yarın protein + su + adım üçlüsünü toparlıyoruz.";
+      }
+
+      function readForm() {
+        return {
+          protein: getNumber("track-protein"),
+          water: getNumber("track-water"),
+          steps: getNumber("track-steps"),
+          workout: getValue("track-workout") || "done",
+          calorie: getValue("track-calorie") || "good",
+          sleep: getNumber("track-sleep"),
+          savedAt: new Date().toISOString()
+        };
+      }
+
+      function fillForm(data) {
+        if (!data) return;
+
+        var protein = document.getElementById("track-protein");
+        var water = document.getElementById("track-water");
+        var steps = document.getElementById("track-steps");
+        var workout = document.getElementById("track-workout");
+        var calorie = document.getElementById("track-calorie");
+        var sleep = document.getElementById("track-sleep");
+
+        if (protein) protein.value = data.protein || "";
+        if (water) water.value = data.water || "";
+        if (steps) steps.value = data.steps || "";
+        if (workout) workout.value = data.workout || "done";
+        if (calorie) calorie.value = data.calorie || "good";
+        if (sleep) sleep.value = data.sleep || "";
+      }
+
+      function render(data) {
+        var result = document.getElementById("coachos-track-result");
+        if (!result) return;
+
+        var score = calculateScore(data);
+
+        result.innerHTML =
+          "<strong>Bugünün CoachOS puanı:</strong><br>" +
+          "<div style='font-size:34px;font-weight:900;margin:8px 0;'>" + score + "/100</div>" +
+          "Protein: " + data.protein + " g<br>" +
+          "Su: " + data.water + " L<br>" +
+          "Adım: " + data.steps + "<br>" +
+          "Antrenman: " + labelWorkout(data.workout) + "<br>" +
+          "Kalori: " + labelCalorie(data.calorie) + "<br>" +
+          "Uyku: " + data.sleep + " saat<br><br>" +
+          "<strong>Koç Yorumu:</strong><br>" +
+          coachComment(score);
+      }
+
+      function saveTracking() {
+        var data = readForm();
+        localStorage.setItem(todayKey(), JSON.stringify(data));
+        render(data);
+      }
+
+      function loadTracking() {
+        var raw = localStorage.getItem(todayKey());
+
+        if (!raw) {
+          render({
+            protein: 0,
+            water: 0,
+            steps: 0,
+            workout: "missed",
+            calorie: "bad",
+            sleep: 0
+          });
+          return;
+        }
+
+        try {
+          var data = JSON.parse(raw);
+          fillForm(data);
+          render(data);
+        } catch (e) {
+          localStorage.removeItem(todayKey());
+        }
+      }
+
+      function clearTracking() {
+        localStorage.removeItem(todayKey());
+        fillForm({
+          protein: "",
+          water: "",
+          steps: "",
+          workout: "done",
+          calorie: "good",
+          sleep: ""
+        });
+
+        var result = document.getElementById("coachos-track-result");
+        if (result) result.textContent = "Bugünün takibi temizlendi.";
+      }
+
+      function setActiveTrackingButton() {
+        var buttons = document.querySelectorAll("nav button, header button, .tabs button, .nav button, button[data-page]");
+        buttons.forEach(function (b) {
+          b.classList.remove("active");
+          if (b !== btn) {
+            b.style.background = "";
+            b.style.color = "";
+          }
+        });
+
+        btn.classList.add("active");
+        btn.style.background = "#22c55e";
+        btn.style.color = "#03120a";
+      }
+
+      function openTracking(e) {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+
+        setActiveTrackingButton();
+
+        panel.style.display = "block";
+        panel.style.visibility = "visible";
+        panel.style.opacity = "1";
+
+        loadTracking();
+
+        panel.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+
+        return false;
+      }
+
+      btn.onclick = openTracking;
+
+      var saveBtn = document.getElementById("track-save-btn");
+      var loadBtn = document.getElementById("track-load-btn");
+      var clearBtn = document.getElementById("track-clear-btn");
+
+      if (saveBtn) saveBtn.onclick = saveTracking;
+      if (loadBtn) loadBtn.onclick = loadTracking;
+      if (clearBtn) clearBtn.onclick = clearTracking;
+    });
+  } catch (error) {
+    console.error("CoachOS Tracking UX Fix v3 error:", error);
+  }
+})();
+</script>
