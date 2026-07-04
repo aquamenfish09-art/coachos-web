@@ -59,7 +59,7 @@ function getMealPrompt(note, language = "tr") {
   const outputLanguage = langName(language);
 
   return `
-You are CoachOS World Cuisine Nutrition Engine v8.
+You are CoachOS World Cuisine Nutrition Engine v10.
 
 OUTPUT LANGUAGE:
 Write the entire visible report in ${outputLanguage}.
@@ -67,6 +67,7 @@ If the language is Turkish, use Turkish headings and Turkish coaching comments.
 If the language is English, use English headings and English coaching comments.
 Food names may keep their original local names when useful.
 
+ROLE:
 You are not a simple food recognition system.
 You are a professional AI nutrition coach that recognizes world cuisine, estimates visual portions, calculates calories/macros, evaluates micronutrients, and comments based on fat loss and muscle retention goals.
 
@@ -305,7 +306,7 @@ function getBodyPrompt(note, language = "tr") {
   const outputLanguage = langName(language);
 
   return `
-You are CoachOS Elite Body Analysis Engine v9.
+You are CoachOS Elite Body Analysis Engine v10.
 
 OUTPUT LANGUAGE:
 Write the entire visible report in ${outputLanguage}.
@@ -317,7 +318,7 @@ ${note || "None"}
 
 ROLE:
 You are not a simple image description model.
-You are a professional AI fitness coach that analyzes body composition visually and creates a realistic transformation strategy.
+You are a professional AI fitness coach that analyzes visible body composition and creates a realistic transformation strategy.
 
 MAIN GOAL:
 Analyze the body image for fitness purposes:
@@ -325,13 +326,14 @@ Analyze the body image for fitness purposes:
 - fat distribution
 - muscle mass appearance
 - strong areas
-- weak areas
+- areas to improve
 - posture and symmetry
 - training priority
 - nutrition priority
 - cardio / steps priority
 - 90-day transformation strategy
 - clear coach comment
+- 3 immediate action tasks
 
 SAFETY RULES:
 - Do not diagnose medical conditions.
@@ -346,7 +348,7 @@ SAFETY RULES:
 - If lighting, angle, clothing, cropping or pose limits accuracy, say it clearly and still provide useful strategy.
 
 VISUAL ANALYSIS LOGIC:
-When analyzing the image, evaluate what is visible:
+When analyzing the image, evaluate only what is visible:
 1. Overall body fat level
 2. Waist and belly fat visibility
 3. Chest shape and fat distribution
@@ -367,7 +369,7 @@ If the image shows:
 - visible abs and clear definition: lower range
 - some muscle shape but waist/belly fat: moderate range
 - clear belly/waist fat and low definition: higher range
-- limited visibility or bad lighting: wider range
+- limited visibility, clothing limitation or bad lighting: wider range
 
 Do not be overconfident.
 If the image is unclear, say the confidence is moderate or low.
@@ -404,7 +406,8 @@ Do not write JSON.
 Do not write markdown tables.
 Do not write raw data.
 Do not write code block.
-Do not use generic filler. Analyze what is visually visible.
+Do not use generic filler.
+Analyze what is visually visible.
 
 If the output language is Turkish, use this exact structure:
 
@@ -640,9 +643,7 @@ async function callGeminiWithRetry({ apiKey, prompt, parsedImage }) {
         result.status === 503 ||
         result.status === 504;
 
-      if (!isTemporary) {
-        break;
-      }
+      if (!isTemporary) break;
 
       await wait(700 * attempt);
     }
@@ -677,7 +678,6 @@ export default async function handler(req, res) {
 
   try {
     const { image, mode, note, language } = req.body || {};
-
     const finalLanguage = cleanLanguage(language);
 
     if (!image || typeof image !== "string") {
@@ -714,10 +714,9 @@ export default async function handler(req, res) {
       });
     }
 
-    const prompt =
-      mode === "meal"
-        ? getMealPrompt(note, finalLanguage)
-        : getBodyPrompt(note, finalLanguage);
+    const prompt = mode === "meal"
+      ? getMealPrompt(note, finalLanguage)
+      : getBodyPrompt(note, finalLanguage);
 
     const geminiResult = await callGeminiWithRetry({
       apiKey,
