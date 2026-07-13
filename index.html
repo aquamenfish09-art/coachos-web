@@ -944,7 +944,6 @@ function hafizaTemizle() {
 }
 
 async function yemekAnaliz() {
- async function yemekAnaliz() {
   const file = document.getElementById("mealImage").files[0];
   const note = text("yemekText");
   const out = document.getElementById("yemekSonuc");
@@ -977,197 +976,15 @@ async function yemekAnaliz() {
     const data = await r.json();
 
     if (!r.ok) {
-      out.textContent =
-        `${t("apiError")} ${data.error || "Analysis failed."}`;
+      out.textContent = `${t("apiError")} ${data.error || "Analysis failed."}`;
       return;
     }
 
-    const report = String(data.result || "");
-
-    function safe(value) {
-      return String(value || "—")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
-
-    function pick(regex) {
-      const match = report.match(regex);
-      return match && match[1] ? match[1].trim() : "—";
-    }
-
-    const calories = pick(
-      /^[\s>*-]*(?:Tahmini toplam(?: kalori)?|Toplam kalori|Estimated total(?: calories)?|Total calories)\s*:\s*([^\r\n]+)/im
-    );
-
-    const protein = pick(
-      /^[\s>*-]*(?:Tahmini protein|Estimated protein|Protein)\s*:\s*([^\r\n]+)/im
-    );
-
-    const carbs = pick(
-      /^[\s>*-]*(?:Tahmini karbonhidrat|Karbonhidrat|Estimated carbs?|Carbohydrates?)\s*:\s*([^\r\n]+)/im
-    );
-
-    const fat = pick(
-      /^[\s>*-]*(?:Tahmini yağ|Yağ|Estimated fat|Fat)\s*:\s*([^\r\n]+)/im
-    );
-
-    const cuisine = pick(
-      /^[\s>*-]*(?:Mutfak|Cuisine)\s*:\s*([^\r\n]+)/im
-    );
-
-    const confidence = pick(
-      /^[\s>*-]*(?:Güven|Confidence)\s*:\s*([^\r\n]+)/im
-    );
-
-    const english = getCurrentLanguage() === "en";
-
-    out.innerHTML = `
-      <div style="
-        display:flex;
-        justify-content:space-between;
-        align-items:flex-start;
-        gap:12px;
-        margin-bottom:14px;
-      ">
-        <div>
-          <div style="
-            color:#f8fafc;
-            font-size:18px;
-            font-weight:900;
-          ">
-            ${english ? "Meal Analysis Summary" : "Yemek Analizi Özeti"}
-          </div>
-
-          <div style="
-            margin-top:6px;
-            color:#94a3b8;
-            font-size:12px;
-            line-height:1.5;
-          ">
-            ${english ? "Cuisine" : "Mutfak"}: ${safe(cuisine)}
-            ·
-            ${english ? "Confidence" : "Güven"}: ${safe(confidence)}
-          </div>
-        </div>
-
-        <div style="
-          flex:none;
-          padding:7px 9px;
-          border-radius:999px;
-          border:1px solid rgba(245,158,11,.35);
-          background:rgba(245,158,11,.12);
-          color:#fde68a;
-          font-size:11px;
-          font-weight:800;
-          white-space:nowrap;
-        ">
-          ${english ? "PHOTO ESTIMATE" : "FOTOĞRAF TAHMİNİ"}
-        </div>
-      </div>
-
-      <div style="
-        display:grid;
-        grid-template-columns:repeat(auto-fit,minmax(125px,1fr));
-        gap:10px;
-        margin-bottom:14px;
-      ">
-        <div style="
-          padding:13px;
-          min-height:82px;
-          border-radius:17px;
-          border:1px solid rgba(148,163,184,.18);
-          background:rgba(15,23,42,.92);
-        ">
-          <div style="color:#94a3b8;font-size:12px;margin-bottom:8px;">
-            ${english ? "Calories" : "Kalori"}
-          </div>
-          <strong style="color:#f8fafc;font-size:18px;">
-            ${safe(calories)}
-          </strong>
-        </div>
-
-        <div style="
-          padding:13px;
-          min-height:82px;
-          border-radius:17px;
-          border:1px solid rgba(148,163,184,.18);
-          background:rgba(15,23,42,.92);
-        ">
-          <div style="color:#94a3b8;font-size:12px;margin-bottom:8px;">
-            Protein
-          </div>
-          <strong style="color:#f8fafc;font-size:18px;">
-            ${safe(protein)}
-          </strong>
-        </div>
-
-        <div style="
-          padding:13px;
-          min-height:82px;
-          border-radius:17px;
-          border:1px solid rgba(148,163,184,.18);
-          background:rgba(15,23,42,.92);
-        ">
-          <div style="color:#94a3b8;font-size:12px;margin-bottom:8px;">
-            ${english ? "Carbohydrates" : "Karbonhidrat"}
-          </div>
-          <strong style="color:#f8fafc;font-size:18px;">
-            ${safe(carbs)}
-          </strong>
-        </div>
-
-        <div style="
-          padding:13px;
-          min-height:82px;
-          border-radius:17px;
-          border:1px solid rgba(148,163,184,.18);
-          background:rgba(15,23,42,.92);
-        ">
-          <div style="color:#94a3b8;font-size:12px;margin-bottom:8px;">
-            ${english ? "Fat" : "Yağ"}
-          </div>
-          <strong style="color:#f8fafc;font-size:18px;">
-            ${safe(fat)}
-          </strong>
-        </div>
-      </div>
-
-      <details style="
-        overflow:hidden;
-        border-radius:15px;
-        border:1px solid rgba(148,163,184,.16);
-        background:rgba(2,6,23,.45);
-      ">
-        <summary style="
-          cursor:pointer;
-          padding:13px;
-          color:#bae6fd;
-          font-weight:800;
-        ">
-          ${english ? "Open detailed analysis" : "Detaylı analizi aç"}
-        </summary>
-
-        <div style="
-          padding:14px;
-          border-top:1px solid rgba(148,163,184,.14);
-          color:#dbeafe;
-          line-height:1.55;
-          white-space:pre-wrap;
-          overflow-wrap:anywhere;
-        ">
-          ${safe(report)}
-        </div>
-      </details>
-    `;
-
+    out.textContent = data.result;
     hafizayaKaydet("meal", data.result, note);
 
   } catch (e) {
-    out.textContent =
-      `${t("analysisError")} ${e.message}`;
+    out.textContent = `${t("analysisError")} ${e.message}`;
   }
 }
 
