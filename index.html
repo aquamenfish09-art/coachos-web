@@ -1084,19 +1084,37 @@ function coachosCleanMealReport(report) {
 
 function coachosExtractMealValue(report, labels, units, displayUnit) {
   const text = coachosCleanMealReport(report);
-  const numberPattern = "([0-9]{1,4}(?:[.,][0-9]{1,2})?)";
-  const unitPattern = units.map(coachosEscapeRegex).join("|");
+
+  const number = "[0-9]{1,4}(?:[.,][0-9]{1,2})?";
+  const valuePattern =
+    `(${number})(?:\\s*(?:-|–|—|to|ile)\\s*(${number}))?`;
+
+  const unitPattern = units
+    .map(coachosEscapeRegex)
+    .join("|");
 
   for (const label of labels) {
     const labelPattern = coachosEscapeRegex(label);
+
     const regex = new RegExp(
-      `${labelPattern}[^0-9\\n]{0,28}${numberPattern}\\s*(?:${unitPattern})`,
+      `${labelPattern}[\\s\\S]{0,80}?${valuePattern}\\s*(?:${unitPattern})\\b`,
       "i"
     );
+
     const match = text.match(regex);
+
     if (match) {
-      const value = match[1].replace(",", ".");
-      return `${value} ${displayUnit}`;
+      const normalize = value =>
+        String(value).replace(",", ".");
+
+      const first = normalize(match[1]);
+      const second = match[2]
+        ? normalize(match[2])
+        : null;
+
+      return second
+        ? `${first}–${second} ${displayUnit}`
+        : `${first} ${displayUnit}`;
     }
   }
 
