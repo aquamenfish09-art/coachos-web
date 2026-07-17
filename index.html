@@ -461,7 +461,23 @@
 
 <script>
 const LANG = {
-  tr: {
+  tr: {trackingNav: "Takip",
+trackingTitle: "Günlük Takip",
+trackingIntro: "Bugünkü protein, su, adım, antrenman ve uyku durumunu gir. CoachOS günlük disiplin puanını hesaplar.",
+
+workoutDone: "Yaptım",
+workoutMinimum: "Minimum görev yaptım",
+workoutMissed: "Yapmadım",
+
+calorieBalance: "Kalori düzeni",
+calorieGood: "İyi gittim",
+calorieMedium: "Orta gittim",
+calorieBad: "Dağıldım",
+
+trackingSave: "Takibi Kaydet",
+trackingLoad: "Bugünü Getir",
+trackingClear: "Bugünü Temizle",
+trackingEmpty: "Henüz takip girilmedi.",
     appTitle: "CoachOS - AI Fitness Koçu",
     panel: "Panel",
     profil: "Profil",
@@ -540,7 +556,23 @@ const LANG = {
     memoryBody: "Vücut Analizi"
   },
 
-  en: {
+  en: {trackingNav: "Tracking",
+trackingTitle: "Daily Tracking",
+trackingIntro: "Enter today's protein, water, steps, workout and sleep. CoachOS calculates your daily discipline score.",
+
+workoutDone: "Completed",
+workoutMinimum: "Minimum workout completed",
+workoutMissed: "Skipped",
+
+calorieBalance: "Calorie balance",
+calorieGood: "On target",
+calorieMedium: "Partly on target",
+calorieBad: "Off target",
+
+trackingSave: "Save Tracking",
+trackingLoad: "Load Today",
+trackingClear: "Clear Today",
+trackingEmpty: "No tracking data yet.",
     appTitle: "CoachOS - AI Fitness Coach",
     panel: "Dashboard",
     profil: "Profile",
@@ -1786,11 +1818,9 @@ panelGuncelle();
 
         <div class="coachos-track-grid">
           <div class="coachos-track-card">
-            <label>Protein / gram</label>
           <label><span data-i18n="protein">Protein</span> / g</label>
 
           <div class="coachos-track-card">
-            <label>Su / litre</label>
          <label><span data-i18n="water">Su</span> / L</label>
 
           <div class="coachos-track-card">
@@ -1835,14 +1865,14 @@ panelGuncelle();
   </button>
 </div>
 
-        <div id="coachos-track-result" class="coachos-track-card">
-          Henüz takip girilmedi.
-        </div>
+      <div id="coachos-track-result" class="coachos-track-card">
+  <span data-i18n="trackingEmpty">Henüz takip girilmedi.</span>
+</div>
       `;
 
       var main = document.querySelector("main") || document.body;
       main.appendChild(panel);
-
+      applyLanguage();
       function todayKey() {
         var d = new Date();
         var y = d.getFullYear();
