@@ -942,6 +942,291 @@ function hafizaTemizle() {
   hafizaGoster();
   panelGuncelle();
 }
+function coachosEnsureMealStyles() {
+  if (document.getElementById("coachos-meal-analysis-styles")) return;
+
+  const style = document.createElement("style");
+  style.id = "coachos-meal-analysis-styles";
+  style.textContent = `
+    #yemekSonuc {
+      white-space: normal;
+    }
+
+    .meal-analysis-shell {
+      display: grid;
+      gap: 14px;
+    }
+
+    .meal-analysis-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .meal-analysis-title {
+      margin: 0;
+      font-size: 18px;
+      color: #f8fafc;
+    }
+
+    .meal-analysis-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .meal-estimate-badge,
+    .meal-meta-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid #334155;
+      background: #0f172a;
+      color: #cbd5e1;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .meal-estimate-badge {
+      border-color: rgba(56, 189, 248, 0.45);
+      background: rgba(56, 189, 248, 0.10);
+      color: #7dd3fc;
+    }
+
+    .meal-macro-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .meal-macro-card {
+      min-width: 0;
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid #253044;
+      background: linear-gradient(145deg, #111827, #0b1220);
+    }
+
+    .meal-macro-label {
+      display: block;
+      color: #94a3b8;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .meal-macro-value {
+      display: block;
+      margin-top: 6px;
+      color: #f8fafc;
+      font-size: clamp(22px, 5vw, 30px);
+      line-height: 1.05;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .meal-macro-card.calories .meal-macro-value { color: #fbbf24; }
+    .meal-macro-card.protein .meal-macro-value { color: #4ade80; }
+    .meal-macro-card.carbs .meal-macro-value { color: #38bdf8; }
+    .meal-macro-card.fat .meal-macro-value { color: #c084fc; }
+
+    .meal-full-details {
+      border: 1px solid #334155;
+      border-radius: 14px;
+      background: #020617;
+      overflow: hidden;
+    }
+
+    .meal-full-details summary {
+      cursor: pointer;
+      padding: 13px 14px;
+      color: #dbeafe;
+      font-weight: 900;
+      user-select: none;
+    }
+
+    .meal-full-report {
+      padding: 0 14px 14px;
+      color: #cbd5e1;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+    }
+
+    @media (min-width: 520px) {
+      .meal-macro-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+  `;
+
+  document.head.appendChild(style);
+}
+
+function coachosEscapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function coachosCleanMealReport(report) {
+  return String(report || "")
+    .replace(/\r/g, "")
+    .replace(/\*\*/g, "")
+    .replace(/__+/g, "")
+    .replace(/[•●▪◦]/g, " ")
+    .replace(/\u00a0/g, " ")
+    .trim();
+}
+
+function coachosExtractMealValue(report, labels, units, displayUnit) {
+  const text = coachosCleanMealReport(report);
+  const numberPattern = "([0-9]{1,4}(?:[.,][0-9]{1,2})?)";
+  const unitPattern = units.map(coachosEscapeRegex).join("|");
+
+  for (const label of labels) {
+    const labelPattern = coachosEscapeRegex(label);
+    const regex = new RegExp(
+      `${labelPattern}[^0-9\\n]{0,28}${numberPattern}\\s*(?:${unitPattern})`,
+      "i"
+    );
+    const match = text.match(regex);
+    if (match) {
+      const value = match[1].replace(",", ".");
+      return `${value} ${displayUnit}`;
+    }
+  }
+
+  return null;
+}
+
+function coachosExtractMealText(report, labels) {
+  const text = coachosCleanMealReport(report);
+
+  for (const label of labels) {
+    const labelPattern = coachosEscapeRegex(label);
+    const regex = new RegExp(`${labelPattern}\\s*[:\\-–—]?\\s*([^\\n]{2,60})`, "i");
+    const match = text.match(regex);
+    if (match) return match[1].trim();
+  }
+
+  return null;
+}
+
+function coachosRenderMealAnalysis(report, outputElement) {
+  if (!outputElement) return;
+
+  const safeReport = String(report || "").trim();
+  if (!safeReport) {
+    outputElement.textContent = t("mealEmpty");
+    return;
+  }
+
+  coachosEnsureMealStyles();
+
+  const english = getCurrentLanguage() === "en";
+  const calories = coachosExtractMealValue(
+    safeReport,
+    ["total calories", "calories", "calorie", "toplam kalori", "kalori", "energy", "enerji"],
+    ["kcal", "cal"],
+    "kcal"
+  );
+  const protein = coachosExtractMealValue(
+    safeReport,
+    ["protein"],
+    ["grams", "gram", "gr", "g"],
+    "g"
+  );
+  const carbs = coachosExtractMealValue(
+    safeReport,
+    ["total carbohydrates", "carbohydrates", "carbs", "toplam karbonhidrat", "karbonhidratlar", "karbonhidrat"],
+    ["grams", "gram", "gr", "g"],
+    "g"
+  );
+  const fat = coachosExtractMealValue(
+    safeReport,
+    ["total fat", "fats", "fat", "toplam yağ", "yağ"],
+    ["grams", "gram", "gr", "g"],
+    "g"
+  );
+
+  const cuisine = coachosExtractMealText(
+    safeReport,
+    english ? ["cuisine"] : ["mutfak", "cuisine"]
+  );
+  const confidence = coachosExtractMealText(
+    safeReport,
+    english ? ["confidence"] : ["güven", "confidence"]
+  );
+
+  const hasMacro = Boolean(calories || protein || carbs || fat);
+  if (!hasMacro) {
+    outputElement.textContent = safeReport;
+    return;
+  }
+
+  const macroCards = [
+    {
+      className: "calories",
+      label: english ? "Calories" : "Kalori",
+      value: calories || "—"
+    },
+    {
+      className: "protein",
+      label: "Protein",
+      value: protein || "—"
+    },
+    {
+      className: "carbs",
+      label: english ? "Carbohydrates" : "Karbonhidrat",
+      value: carbs || "—"
+    },
+    {
+      className: "fat",
+      label: english ? "Fat" : "Yağ",
+      value: fat || "—"
+    }
+  ];
+
+  const meta = [];
+  if (cuisine) {
+    meta.push(`<span class="meal-meta-badge">${english ? "Cuisine" : "Mutfak"}: ${escapeHtml(cuisine)}</span>`);
+  }
+  if (confidence) {
+    meta.push(`<span class="meal-meta-badge">${english ? "Confidence" : "Güven"}: ${escapeHtml(confidence)}</span>`);
+  }
+
+  outputElement.innerHTML = `
+    <div class="meal-analysis-shell">
+      <div class="meal-analysis-header">
+        <div>
+          <h4 class="meal-analysis-title">${english ? "Meal Analysis Summary" : "Yemek Analizi Özeti"}</h4>
+          <div class="meal-analysis-meta">
+            <span class="meal-estimate-badge">${english ? "PHOTO ESTIMATE" : "FOTOĞRAF TAHMİNİ"}</span>
+            ${meta.join("")}
+          </div>
+        </div>
+      </div>
+
+      <div class="meal-macro-grid">
+        ${macroCards.map(card => `
+          <div class="meal-macro-card ${card.className}">
+            <span class="meal-macro-label">${card.label}</span>
+            <strong class="meal-macro-value">${escapeHtml(card.value)}</strong>
+          </div>
+        `).join("")}
+      </div>
+
+      <details class="meal-full-details">
+        <summary>${english ? "Open detailed analysis" : "Detaylı analizi aç"}</summary>
+        <div class="meal-full-report">${escapeHtml(safeReport)}</div>
+      </details>
+    </div>
+  `;
+}
 
 async function yemekAnaliz() {
   const file = document.getElementById("mealImage").files[0];
@@ -980,7 +1265,7 @@ async function yemekAnaliz() {
       return;
     }
 
-    out.textContent = data.result;
+   coachosRenderMealAnalysis(data.result, out);
     hafizayaKaydet("meal", data.result, note);
 
   } catch (e) {
