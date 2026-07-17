@@ -1926,28 +1926,149 @@ panelGuncelle();
         return "Bugün zayıf kalmış. Sorun değil, yarın protein + su + adım üçlüsünü toparlıyoruz.";
       }
 
-      function render(data) {
-        var result = document.getElementById("coachos-track-result");
-        if (!result) return;
+     function render(data) {
+  var result = document.getElementById("coachos-track-result");
+  if (!result) return;
 
-        var score = calculateScore(data);
+  data = data || {};
 
-        result.innerHTML = `
-          <div>Bugünün CoachOS puanı:</div>
-          <div class="coachos-track-score">${score}/100</div>
-          <br>
-          <strong>Özet:</strong><br>
-          Protein: ${data.protein} g<br>
-          Su: ${data.water} L<br>
-          Adım: ${data.steps}<br>
-          Antrenman: ${data.workout}<br>
-          Kalori: ${data.calorie}<br>
-          Uyku: ${data.sleep} saat<br>
-          <br>
-          <strong>Koç Yorumu:</strong><br>
-          ${coachComment(score)}
-        `;
-      }
+  var lang =
+    typeof getCurrentLanguage === "function" &&
+    getCurrentLanguage() === "en"
+      ? "en"
+      : "tr";
+
+  var totalScore = Number(calculateScore(data)) || 0;
+
+  var workoutLabels = {
+    tr: {
+      done: "Yaptım",
+      minimum: "Minimum görev yaptım",
+      missed: "Yapmadım",
+      "Yaptım": "Yaptım",
+      "Minimum görev yaptım": "Minimum görev yaptım",
+      "Yapmadım": "Yapmadım"
+    },
+
+    en: {
+      done: "Completed",
+      minimum: "Minimum workout completed",
+      missed: "Skipped",
+      "Yaptım": "Completed",
+      "Minimum görev yaptım": "Minimum workout completed",
+      "Yapmadım": "Skipped"
+    }
+  };
+
+  var calorieLabels = {
+    tr: {
+      good: "İyi gittim",
+      medium: "Orta gittim",
+      bad: "Dağıldım",
+      "İyi gittim": "İyi gittim",
+      "Orta gittim": "Orta gittim",
+      "Dağıldım": "Dağıldım"
+    },
+
+    en: {
+      good: "On target",
+      medium: "Partly on target",
+      bad: "Off target",
+      "İyi gittim": "On target",
+      "Orta gittim": "Partly on target",
+      "Dağıldım": "Off target"
+    }
+  };
+
+  var workoutText =
+    workoutLabels[lang][data.workout] ||
+    (lang === "en" ? "Not selected" : "Seçilmedi");
+
+  var calorieText =
+    calorieLabels[lang][data.calorie] ||
+    (lang === "en" ? "Not selected" : "Seçilmedi");
+
+  var comment;
+
+  if (lang === "en") {
+    if (totalScore >= 80) {
+      comment =
+        "Excellent day. Keep the same routine tomorrow.";
+    } else if (totalScore >= 60) {
+      comment =
+        "Good progress. Improve one weak area tomorrow.";
+    } else if (totalScore >= 40) {
+      comment =
+        "A mixed day. Focus on protein, water, and steps tomorrow.";
+    } else {
+      comment =
+        "Today was below target. That is okay. Rebuild with protein, water, and steps tomorrow.";
+    }
+  } else {
+    comment = coachComment(totalScore);
+  }
+
+  result.innerHTML = `
+    <div>
+      <strong>
+        ${
+          lang === "en"
+            ? "Today's CoachOS score:"
+            : "Bugünün CoachOS puanı:"
+        }
+      </strong>
+    </div>
+
+    <div class="coachos-track-score">
+      ${totalScore}/100
+    </div>
+
+    <br>
+
+    <strong>${lang === "en" ? "Summary:" : "Özet:"}</strong>
+    <br>
+
+    ${t("protein")}: ${data.protein || 0} g
+    <br>
+
+    ${t("water")}: ${data.water || 0} L
+    <br>
+
+    ${t("steps")}: ${data.steps || 0}
+    <br>
+
+    ${t("workout")}: ${workoutText}
+    <br>
+
+    ${t("calorie")}: ${calorieText}
+    <br>
+
+    ${t("sleep")}: ${data.sleep || 0}
+    ${lang === "en" ? " hours" : " saat"}
+    <br><br>
+
+    <strong>${t("coachComment")}:</strong>
+    <br>
+
+    ${comment}
+  `;
+
+  var languageSelect =
+    document.getElementById("languageSelect");
+
+  if (
+    languageSelect &&
+    languageSelect.dataset.trackingResultBound !== "true"
+  ) {
+    languageSelect.addEventListener("change", function () {
+      setTimeout(function () {
+        render(readForm());
+      }, 0);
+    });
+
+    languageSelect.dataset.trackingResultBound = "true";
+  }
+}
 
       function readForm() {
         return {
